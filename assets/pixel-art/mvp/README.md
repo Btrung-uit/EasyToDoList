@@ -14,6 +14,7 @@ ambient/flag/flag-00.png ... flag-05.png
 ambient/grass/grass-00.png ... grass-05.png
 ambient/leaves/leaf-00.png ... leaf-07.png
 mascots/knight/knight-spritesheet.png
+mascots/knight/knight-spritesheet-normalized.png
 mascots/knight/frames/{idle,focus,celebrate,rest}/*.png
 previews/*.gif
 ```
@@ -31,7 +32,9 @@ previews/*.gif
 | Leaves | 8 orientations | 2–4 particles | WPF controls falling translation; choose rotation sprite by progress |
 | Clouds | 3 static sprites | 8–16 px/s | WPF translates horizontally; wrap outside viewport |
 
-Mascot frames are `256 × 256` PNGs with alpha. Render with nearest-neighbor scaling and keep the feet baseline fixed.
+Runtime mascot and flag/grass frames are normalized to `320 × 320` PNGs with alpha. Mascot pivot is `(160, 298)`, flag pivot is `(140, 290)`, and grass pivot is `(180, 270)`. Measured horizontal drift is below `1 px` and vertical drift is `0 px` in every loop. Render with nearest-neighbor scaling.
+
+`knight-spritesheet.png` is the untouched generated source. Runtime code must use the normalized individual frames or `knight-spritesheet-normalized.png`, whose grid is `6 × 4` with `320 × 320` cells.
 
 For Reduced Motion, stop cloud/leaves and use frame `00` for mascot, flag and grass. Gameplay feedback must remain visible through text and color.
 
@@ -51,4 +54,4 @@ Create a transparent exact `4 × 6` sprite sheet for the same brown-haired young
 
 ## Production caveat
 
-These generated assets are sufficient for prototyping and MVP integration. Before a public art-quality release, inspect frame-to-frame silhouette consistency and manually clean any colored edge pixels or animation jitter. Do not generate additional mascot sets until the starter knight is validated inside the real WPF layout.
+These generated assets are sufficient for prototyping and MVP integration. The runtime frames were re-sliced and pivot-normalized after the generated atlases showed progressive left drift. Before a public art-quality release, inspect frame-to-frame silhouette consistency and manually clean any colored edge pixels. Do not generate additional mascot sets until the starter knight is validated inside the real WPF layout.
