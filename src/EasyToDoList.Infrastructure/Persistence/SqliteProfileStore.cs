@@ -13,6 +13,7 @@ public sealed class SqliteProfileStore(AppDbContext dbContext) : IProfileStore
         var profile = await dbContext.PlayerProfiles.SingleAsync(
             row => row.Id == 1,
             cancellationToken);
+        await dbContext.Entry(profile).ReloadAsync(cancellationToken);
         var previousExperience = profile.TotalExperience;
         var previousCoins = profile.CoinBalance;
         profile.TotalExperience = Math.Max(0, checked(previousExperience + requestedChange.Experience));

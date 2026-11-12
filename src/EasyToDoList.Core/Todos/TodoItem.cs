@@ -82,7 +82,12 @@ public sealed class TodoItem
         EnsureOpen();
         if (RewardLockedAtUtc is not null)
         {
-            throw new InvalidOperationException("A locked reward schedule cannot be changed.");
+            if (startDate != StartDate)
+            {
+                throw new InvalidOperationException("Start date cannot change after reward lock.");
+            }
+
+            ForfeitedEarlyBonus |= deadline > Deadline;
         }
 
         ValidateSchedule(startDate, deadline);

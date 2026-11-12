@@ -80,6 +80,94 @@ public sealed class TodoServiceTransactionTests
     }
 
     [Fact]
+    public async Task Cancel_overdue_records_zero_additional_penalty()
+    {
+        await using var fixture = await TodoFixture.CreateAsync();
+        var todo = await fixture.Service.CreateAsync(
+            new CreateTodoCommand("Late", Today.AddDays(-2), Today.AddDays(-1)),
+            CancellationToken.None);
+        var profile = await fixture.Db.PlayerProfiles.SingleAsync();
+        profile.TotalExperience = 10;
+        await fixture.Db.SaveChangesAsync();
+
+        await fixture.Service.CancelAsync(todo.Id, CancellationToken.None);
+
+        fixture.Db.ChangeTracker.Clear();
+        Assert.Equal(10, (await fixture.Db.PlayerProfiles.SingleAsync()).TotalExperience);
+        var transaction = await fixture.Db.RewardTransactions.SingleAsync();
+        Assert.Equal(RewardReason.Cancellation, transaction.Reason);
+        Assert.Equal(0, transaction.ExperienceDelta);
+    }
+
+    [Fact]
+    public async Task Locked_deadline_extension_forfeits_early_bonus_but_keeps_base_reward()
+    {
+        await using var fixture = await TodoFixture.CreateAsync();
+        var todo = await fixture.Service.CreateAsync(
+            new CreateTodoCommand("Task", Today, Today.AddDays(1)),
+            CancellationToken.None);
+        var first = await fixture.Service.CompleteAsync(todo.Id, CancellationToken.None);
+        await fixture.Service.UndoCompletionAsync(todo.Id, first.TransactionId, CancellationToken.None);
+        await fixture.Service.UpdateScheduleAsync(
+            new UpdateTodoScheduleCommand(todo.Id, Today, Today.AddDays(3)),
+            CancellationToken.None);
+
+        var second = await fixture.Service.CompleteAsync(todo.Id, CancellationToken.None);
+
+        Assert.Equal(new RewardAmount(25, 5), second.Reward);
+    }
+
+    [Fact]
+    public async Task Locked_deadline_shortening_uses_new_deadline_with_locked_base()
+    {
+        await using var fixture = await TodoFixture.CreateAsync();
+        var todo = await fixture.Service.CreateAsync(
+            new CreateTodoCommand("Task", Today, Today.AddDays(2)),
+            CancellationToken.None);
+        var first = await fixture.Service.CompleteAsync(todo.Id, CancellationToken.None);
+        await fixture.Service.UndoCompletionAsync(todo.Id, first.TransactionId, CancellationToken.None);
+        await fixture.Service.UpdateScheduleAsync(
+            new UpdateTodoScheduleCommand(todo.Id, Today, Today),
+            CancellationToken.None);
+
+        var second = await fixture.Service.CompleteAsync(todo.Id, CancellationToken.None);
+
+        Assert.Equal(new RewardAmount(30, 6), second.Reward);
+    }
+
+    [Fact]
+    public async Task Reused_context_reloads_profile_changed_by_another_context()
+    {
+        var databaseName = $"EasyToDoList-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var first = await TodoFixture.CreateAsync(connectionString);
+        await using var second = await TodoFixture.CreateAsync(connectionString);
+
+        var firstTodo = await first.Service.CreateAsync(
+            new CreateTodoCommand("First", Today, Today),
+            CancellationToken.None);
+        await first.Service.CompleteAsync(firstTodo.Id, CancellationToken.None);
+        var secondTodo = await second.Service.CreateAsync(
+            new CreateTodoCommand("Second", Today, Today),
+            CancellationToken.None);
+        await second.Service.CompleteAsync(secondTodo.Id, CancellationToken.None);
+        var thirdTodo = await first.Service.CreateAsync(
+            new CreateTodoCommand("Third", Today, Today),
+            CancellationToken.None);
+
+        await first.Service.CompleteAsync(thirdTodo.Id, CancellationToken.None);
+
+        first.Db.ChangeTracker.Clear();
+        var profile = await first.Db.PlayerProfiles.SingleAsync();
+        var ledgerExperience = await first.Db.RewardTransactions.SumAsync(item => item.ExperienceDelta);
+        var ledgerCoins = await first.Db.RewardTransactions.SumAsync(item => item.CoinDelta);
+        Assert.Equal(60, profile.TotalExperience);
+        Assert.Equal(12, profile.CoinBalance);
+        Assert.Equal(profile.TotalExperience, ledgerExperience);
+        Assert.Equal(profile.CoinBalance, ledgerCoins);
+    }
+
+    [Fact]
     public async Task Undo_within_five_seconds_adds_one_reversal_and_restores_todo()
     {
         await using var fixture = await TodoFixture.CreateAsync();
@@ -198,9 +286,14 @@ public sealed class TodoServiceTransactionTests
 
         public TodoService Service { get; }
 
-        public static async Task<TodoFixture> CreateAsync(SaveChangesInterceptor? interceptor = null)
+        public static Task<TodoFixture> CreateAsync(SaveChangesInterceptor? interceptor = null) =>
+            CreateAsync("Data Source=:memory:", interceptor);
+
+        public static async Task<TodoFixture> CreateAsync(
+            string connectionString,
+            SaveChangesInterceptor? interceptor = null)
         {
-            var connection = new SqliteConnection("Data Source=:memory:");
+            var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection);
             if (interceptor is not null)

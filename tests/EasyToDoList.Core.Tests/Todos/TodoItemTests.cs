@@ -55,13 +55,30 @@ public sealed class TodoItemTests
     }
 
     [Fact]
-    public void UpdateSchedule_rejects_changes_after_reward_lock()
+    public void UpdateSchedule_after_reward_lock_allows_deadline_change_without_increasing_snapshot()
     {
         var todo = CreateActiveTodo();
         todo.LockRewardSnapshot(20, Now);
 
+        todo.UpdateSchedule(Today, Today.AddDays(2), Now.AddMinutes(1), Today);
+
+        Assert.Equal(Today.AddDays(2), todo.Deadline);
+        Assert.Equal(Today.AddDays(1), todo.RewardDeadline);
+        Assert.Equal(20, todo.BaseExperience);
+        Assert.True(todo.ForfeitedEarlyBonus);
+    }
+
+    [Fact]
+    public void UpdateSchedule_after_reward_lock_rejects_start_change_and_keeps_forfeited_bonus()
+    {
+        var todo = CreateActiveTodo();
+        todo.LockRewardSnapshot(20, Now);
+        todo.UpdateSchedule(Today, Today.AddDays(2), Now.AddMinutes(1), Today);
+        todo.UpdateSchedule(Today, Today, Now.AddMinutes(2), Today);
+
+        Assert.True(todo.ForfeitedEarlyBonus);
         Assert.Throws<InvalidOperationException>(() =>
-            todo.UpdateSchedule(Today, Today.AddDays(2), Now.AddMinutes(1), Today));
+            todo.UpdateSchedule(Today.AddDays(1), Today.AddDays(1), Now.AddMinutes(3), Today));
     }
 
     [Fact]

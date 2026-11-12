@@ -65,8 +65,11 @@ public sealed class TodoService(
             var durationDays = todo.RewardDurationDays
                 ?? throw new InvalidOperationException("Todo reward duration is not locked.");
             var isOverdue = todo.Status == TodoStatus.Overdue
-                || clock.LocalToday > rewardDeadline;
-            var remainingDays = rewardDeadline.DayNumber - clock.LocalToday.DayNumber;
+                || clock.LocalToday > todo.Deadline;
+            var earlyBonusDeadline = todo.Deadline < rewardDeadline ? todo.Deadline : rewardDeadline;
+            var remainingDays = todo.ForfeitedEarlyBonus
+                ? 0
+                : earlyBonusDeadline.DayNumber - clock.LocalToday.DayNumber;
             var reward = economyCalculator.CalculateTodoCompletionReward(new TodoRewardInput(
                 baseExperience,
                 durationDays,
@@ -148,8 +151,14 @@ public sealed class TodoService(
             }
 
             EnsureRewardSnapshot(todo);
-            var penalty = economyCalculator.CalculateCancellationPenalty(todo.BaseExperience!.Value);
-            var appliedPenalty = await profileStore.ApplyAsync(new RewardAmount(-penalty, 0), ct);
+            var isOverdue = todo.Status == TodoStatus.Overdue || clock.LocalToday > todo.Deadline;
+            var appliedPenalty = new RewardAmount(0, 0);
+            if (!isOverdue)
+            {
+                var penalty = economyCalculator.CalculateCancellationPenalty(todo.BaseExperience!.Value);
+                appliedPenalty = await profileStore.ApplyAsync(new RewardAmount(-penalty, 0), ct);
+            }
+
             var transaction = RewardTransaction.Create(
                 Guid.NewGuid(),
                 RewardSourceType.Todo,
