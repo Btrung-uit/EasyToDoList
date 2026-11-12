@@ -1,0 +1,52 @@
+name: Release artifact
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore EasyToDoList.sln
+
+      - name: Build
+        run: dotnet build EasyToDoList.sln --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test EasyToDoList.sln --configuration Release --no-build
+
+      - name: Publish Windows x64
+        run: >-
+          dotnet publish src/EasyToDoList.App/EasyToDoList.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output artifacts/publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: EasyToDoList-win-x64-${{ github.run_number }}
+          path: artifacts/publish
+          if-no-files-found: error
+          retention-days: 14
