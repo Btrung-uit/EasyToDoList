@@ -102,24 +102,24 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Implement `TodoItem`, `TodoStatus`, commands và results.
-- [ ] Validate title, start date và deadline.
-- [ ] Implement reward snapshot và schedule edit rules.
-- [ ] Implement `ITodoService` và các store cụ thể.
-- [ ] Tạo `RewardTransaction` immutable ledger.
-- [ ] Tạo `IAppUnitOfWork`/`EfAppUnitOfWork`.
-- [ ] Complete cập nhật Todo/Profile/Ledger trong một transaction.
-- [ ] Cancel áp dụng penalty đúng trạng thái.
-- [ ] Undo trong 5 giây tạo reversal transaction, không xóa ledger cũ.
-- [ ] Idempotency key ngăn thưởng/phạt trùng.
+- [x] Implement `TodoItem`, `TodoStatus`, commands và results.
+- [x] Validate title, start date và deadline.
+- [x] Implement reward snapshot và schedule edit rules.
+- [x] Implement `ITodoService` và các store cụ thể.
+- [x] Tạo `RewardTransaction` immutable ledger.
+- [x] Tạo `IAppUnitOfWork`/`EfAppUnitOfWork`.
+- [x] Complete cập nhật Todo/Profile/Ledger trong một transaction.
+- [x] Cancel áp dụng penalty đúng trạng thái.
+- [x] Undo trong 5 giây tạo reversal transaction, không xóa ledger cũ.
+- [x] Idempotency key ngăn thưởng/phạt trùng.
 
 ### Hoàn thành khi
 
-- [ ] Save failure rollback toàn bộ Todo/Profile/Ledger.
-- [ ] Tick/Undo/tick nhanh không cộng trùng.
-- [ ] Terminal state và invalid transition bị chặn.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: implement transactional todo rewards`.
+- [x] Save failure rollback toàn bộ Todo/Profile/Ledger.
+- [x] Tick/Undo/tick nhanh không cộng trùng.
+- [x] Terminal state và invalid transition bị chặn.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: implement transactional todo rewards`.
 
 ## M04 — Daily reconciliation, quá hạn và lịch sử
 

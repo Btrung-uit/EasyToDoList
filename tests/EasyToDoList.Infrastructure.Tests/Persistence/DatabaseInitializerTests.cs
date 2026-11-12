@@ -51,6 +51,41 @@ public sealed class DatabaseInitializerTests
         Assert.Equal(1, profile.Id);
     }
 
+    [Fact]
+    public async Task Initialize_creates_todo_reward_tables_and_indexes()
+    {
+        using var directory = new TemporaryDirectory();
+        var databasePath = Path.Combine(directory.Path, "test.db");
+
+        await new DatabaseInitializer(databasePath).InitializeAsync(CancellationToken.None);
+
+        var connectionString = new SqliteConnectionStringBuilder { DataSource = databasePath }.ToString();
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync();
+        Assert.True(await SchemaObjectExistsAsync(connection, "table", "TodoItems"));
+        Assert.True(await SchemaObjectExistsAsync(connection, "table", "RewardTransactions"));
+        Assert.True(await SchemaObjectExistsAsync(
+            connection,
+            "index",
+            "IX_TodoItems_Status_StartDate_Deadline"));
+        Assert.True(await SchemaObjectExistsAsync(
+            connection,
+            "index",
+            "IX_TodoItems_CompletedAtUtc"));
+        Assert.True(await SchemaObjectExistsAsync(
+            connection,
+            "index",
+            "IX_RewardTransactions_CreatedAtUtc"));
+
+        await using var uniqueCommand = connection.CreateCommand();
+        uniqueCommand.CommandText = """
+            SELECT [unique]
+            FROM pragma_index_list('RewardTransactions')
+            WHERE name = 'IX_RewardTransactions_IdempotencyKey'
+            """;
+        Assert.Equal(1L, (long)(await uniqueCommand.ExecuteScalarAsync())!);
+    }
+
     private static async Task<(long Id, long TotalExperience, long CoinBalance)> ReadSingleProfileAsync(
         string databasePath)
     {
@@ -64,6 +99,18 @@ public sealed class DatabaseInitializerTests
         var profile = (reader.GetInt64(0), reader.GetInt64(1), reader.GetInt64(2));
         Assert.False(await reader.ReadAsync());
         return profile;
+    }
+
+    private static async Task<bool> SchemaObjectExistsAsync(
+        SqliteConnection connection,
+        string type,
+        string name)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = $type AND name = $name";
+        command.Parameters.AddWithValue("$type", type);
+        command.Parameters.AddWithValue("$name", name);
+        return (long)(await command.ExecuteScalarAsync())! == 1;
     }
 
     private sealed class TemporaryDirectory : IDisposable
