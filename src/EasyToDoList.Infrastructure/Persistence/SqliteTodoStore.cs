@@ -8,8 +8,29 @@ public sealed class SqliteTodoStore(AppDbContext dbContext) : ITodoStore
     public async Task AddAsync(TodoItem todo, CancellationToken cancellationToken) =>
         await dbContext.TodoItems.AddAsync(todo, cancellationToken);
 
-    public Task<TodoItem?> GetAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.TodoItems.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+    public async Task<TodoItem?> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var todo = await dbContext.TodoItems.SingleOrDefaultAsync(
+            item => item.Id == id,
+            cancellationToken);
+        if (todo is not null)
+        {
+            await dbContext.Entry(todo).ReloadAsync(cancellationToken);
+        }
+
+        return todo;
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetReconciliationCandidateIdsAsync(
+        DateOnly localDate,
+        CancellationToken cancellationToken) =>
+        await dbContext.TodoItems
+            .Where(item =>
+                item.Status != TodoStatus.Completed
+                && item.Status != TodoStatus.Cancelled
+                && item.StartDate <= localDate)
+            .Select(item => item.Id)
+            .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<TodoItem>> GetTodayAsync(
         DateOnly localDate,

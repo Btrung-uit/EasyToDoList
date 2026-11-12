@@ -127,21 +127,21 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Implement `IClock` có thể thay bằng fake clock trong test.
-- [ ] Lock reward snapshot khi bước sang ngày bắt đầu.
-- [ ] Chuyển Active → Overdue sau deadline.
-- [ ] Áp dụng overdue penalty đúng một lần.
-- [ ] Reconciliation chạy ở startup, midnight và resume.
-- [ ] Implement query Today và history theo tuần/ngày.
-- [ ] Lịch sử phân biệt planned date và completion/cancellation date.
+- [x] Implement `IClock` có thể thay bằng fake clock trong test.
+- [x] Lock reward snapshot khi bước sang ngày bắt đầu.
+- [x] Chuyển Active → Overdue sau deadline.
+- [x] Áp dụng overdue penalty đúng một lần.
+- [x] Cung cấp `ReconcileAsync` idempotent cho startup, midnight và resume; wiring Windows thực hiện ở M10.
+- [x] Implement query Today và history theo tuần/ngày.
+- [x] Lịch sử phân biệt planned date và completion/cancellation date.
 
 ### Hoàn thành khi
 
-- [ ] Mở ứng dụng sau nhiều ngày không nhân penalty.
-- [ ] Gọi reconciliation lặp vẫn idempotent.
-- [ ] Test boundary trước/sau 00:00 pass.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: reconcile daily todo state and history`.
+- [x] Mở ứng dụng sau nhiều ngày không nhân penalty.
+- [x] Gọi reconciliation lặp vẫn idempotent.
+- [x] Test boundary trước/sau 00:00 pass.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: reconcile daily todo state and history`.
 
 ## M05 — Pomodoro state machine và persistence
 
