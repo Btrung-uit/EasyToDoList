@@ -135,4 +135,28 @@ public sealed class EconomyCalculatorTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => _calculator.CalculateLateRecovery(-1));
     }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(-1, true)]
+    public void CalculateTodoCompletionReward_rejects_non_positive_duration(
+        int durationDays,
+        bool isOverdue)
+    {
+        var input = new TodoRewardInput(20, durationDays, 0, isOverdue);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => _calculator.CalculateTodoCompletionReward(input));
+    }
+
+    [Fact]
+    public void CalculateTodoCompletionReward_rejects_experience_overflow()
+    {
+        var input = new TodoRewardInput(int.MaxValue, 2, 1, false);
+
+        Assert.Throws<OverflowException>(
+            () => _calculator.CalculateTodoCompletionReward(input));
+    }
 }

@@ -53,6 +53,8 @@ public sealed class EconomyCalculator
 
     public RewardAmount CalculateTodoCompletionReward(TodoRewardInput input)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(input.DurationDays, 1);
+
         if (input.IsOverdue)
         {
             return new RewardAmount(CalculateLateRecovery(input.BaseExperience), 0);
@@ -62,7 +64,7 @@ public sealed class EconomyCalculator
             input.BaseExperience,
             input.DurationDays,
             input.RemainingDays);
-        var experience = input.BaseExperience + earlyBonus;
+        var experience = checked(input.BaseExperience + earlyBonus);
         var coins = (input.BaseExperience / EconomyRules.TodoBaseExperiencePerCoin)
             + (earlyBonus / EconomyRules.TodoEarlyBonusPerCoin);
         return new RewardAmount(experience, coins);
