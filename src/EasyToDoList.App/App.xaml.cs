@@ -1,5 +1,4 @@
 ﻿using System.Configuration;
-using System.IO;
 using System.Windows;
 using EasyToDoList.Infrastructure.Persistence;
 
@@ -12,9 +11,19 @@ public partial class App : Application
         base.OnStartup(e);
 
         var databasePath = ApplicationDataPaths.DatabasePath;
-        Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
-
-        await new DatabaseInitializer(databasePath).InitializeAsync(CancellationToken.None);
+        var startupError = await AppStartup.InitializeDatabaseAsync(
+            databasePath,
+            CancellationToken.None);
+        if (startupError is not null)
+        {
+            MessageBox.Show(
+                startupError,
+                "EasyToDoList - Lỗi khởi động",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
 
         new MainWindow().Show();
     }

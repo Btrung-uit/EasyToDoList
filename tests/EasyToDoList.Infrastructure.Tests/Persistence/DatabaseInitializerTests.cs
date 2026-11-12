@@ -37,10 +37,25 @@ public sealed class DatabaseInitializerTests
         Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
     }
 
+    [Fact]
+    public async Task Initialize_supports_database_path_with_semicolon()
+    {
+        using var directory = new TemporaryDirectory();
+        var databaseDirectory = Path.Combine(directory.Path, "profile;name");
+        Directory.CreateDirectory(databaseDirectory);
+        var databasePath = Path.Combine(databaseDirectory, "test.db");
+
+        await new DatabaseInitializer(databasePath).InitializeAsync(CancellationToken.None);
+
+        var profile = await ReadSingleProfileAsync(databasePath);
+        Assert.Equal(1, profile.Id);
+    }
+
     private static async Task<(long Id, long TotalExperience, long CoinBalance)> ReadSingleProfileAsync(
         string databasePath)
     {
-        await using var connection = new SqliteConnection($"Data Source={databasePath}");
+        var connectionString = new SqliteConnectionStringBuilder { DataSource = databasePath }.ToString();
+        await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, TotalExperience, CoinBalance FROM PlayerProfiles";
