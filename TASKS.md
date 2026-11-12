@@ -23,7 +23,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | Mốc | Nội dung | Trạng thái | Phụ thuộc |
 |---|---|---|---|
 | M00 | Đặc tả, architecture và asset prototype | Hoàn thành | — |
-| M01 | Solution foundation và SQLite bootstrap | Chưa bắt đầu | M00 |
+| M01 | Solution foundation và SQLite bootstrap | Hoàn thành | M00 |
 | M02 | Economy, profile, level và rank | Chưa bắt đầu | M01 |
 | M03 | To-do domain, transaction và reward ledger | Chưa bắt đầu | M02 |
 | M04 | Daily reconciliation, quá hạn và lịch sử | Chưa bắt đầu | M03 |
@@ -56,22 +56,22 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Tạo `EasyToDoList.sln`.
-- [ ] Tạo ba project sản phẩm: `App`, `Core`, `Infrastructure`.
-- [ ] Tạo ba project test tương ứng.
-- [ ] Cấu hình `net10.0`/`net10.0-windows`, nullable và warnings-as-errors.
-- [ ] Thêm EF Core SQLite và migration đầu tiên.
-- [ ] Tạo database trong thư mục dữ liệu người dùng, không đặt cạnh executable.
-- [ ] Seed đúng một `PlayerProfile` với EXP/coin bằng `0`.
-- [ ] Thiết lập composition root tối thiểu để ứng dụng mở được cửa sổ trống.
+- [x] Tạo `EasyToDoList.sln`.
+- [x] Tạo ba project sản phẩm: `App`, `Core`, `Infrastructure`.
+- [x] Tạo ba project test tương ứng.
+- [x] Cấu hình `net10.0`/`net10.0-windows`, nullable và warnings-as-errors.
+- [x] Thêm EF Core SQLite và migration đầu tiên.
+- [x] Tạo database trong thư mục dữ liệu người dùng, không đặt cạnh executable.
+- [x] Seed đúng một `PlayerProfile` với EXP/coin bằng `0`.
+- [x] Thiết lập composition root tối thiểu để ứng dụng mở được cửa sổ trống.
 
 ### Hoàn thành khi
 
-- [ ] Core không reference App hoặc Infrastructure.
-- [ ] Database mới được tạo bằng migration và có đúng một profile.
-- [ ] `dotnet build -warnaserror` pass.
-- [ ] `dotnet test` pass.
-- [ ] Commit: `chore: scaffold WPF solution and SQLite persistence`.
+- [x] Core không reference App hoặc Infrastructure.
+- [x] Database mới được tạo bằng migration và có đúng một profile.
+- [x] `dotnet build -warnaserror` pass.
+- [x] `dotnet test` pass.
+- [x] Commit: `chore: scaffold WPF solution and SQLite persistence`.
 
 ## M02 — Economy, profile, level và rank
 
