@@ -24,7 +24,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 |---|---|---|---|
 | M00 | Đặc tả, architecture và asset prototype | Hoàn thành | — |
 | M01 | Solution foundation và SQLite bootstrap | Hoàn thành | M00 |
-| M02 | Economy, profile, level và rank | Chưa bắt đầu | M01 |
+| M02 | Economy, profile, level và rank | Hoàn thành | M01 |
 | M03 | To-do domain, transaction và reward ledger | Chưa bắt đầu | M02 |
 | M04 | Daily reconciliation, quá hạn và lịch sử | Chưa bắt đầu | M03 |
 | M05 | Pomodoro state machine và persistence | Chưa bắt đầu | M02, M03 |
@@ -79,22 +79,22 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Implement `EconomyRules`, `EconomyCalculator`, `RewardAmount`.
-- [ ] Base EXP: 1/2/7/14+ ngày tương ứng 20/25/50/85.
-- [ ] Early bonus tối đa 50%, deadline nhận 0 bonus.
-- [ ] Cancellation penalty 10%, clamp 2–10 EXP.
-- [ ] Overdue penalty 30%, late recovery 25%.
-- [ ] Pomodoro EXP/coin tuyến tính theo block 5 phút.
-- [ ] Implement `PlayerProgress` và rank F–S.
-- [ ] Dùng `MidpointRounding.AwayFromZero`.
+- [x] Implement `EconomyRules`, `EconomyCalculator`, `RewardAmount`.
+- [x] Base EXP: 1/2/7/14+ ngày tương ứng 20/25/50/85.
+- [x] Early bonus tối đa 50%, deadline nhận 0 bonus.
+- [x] Cancellation penalty 10%, clamp 2–10 EXP.
+- [x] Overdue penalty 30%, late recovery 25%.
+- [x] Pomodoro EXP/coin tuyến tính theo block 5 phút.
+- [x] Implement `PlayerProgress` và rank F–S.
+- [x] Dùng `MidpointRounding.AwayFromZero`.
 
 ### Hoàn thành khi
 
-- [ ] Test toàn bộ boundary 1/2/7/14/30 ngày pass.
-- [ ] Test level/rank tăng và giảm pass.
-- [ ] Economy không reference database, clock hoặc WPF.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add economy and adventurer progression rules`.
+- [x] Test toàn bộ boundary 1/2/7/14/30 ngày pass.
+- [x] Test level/rank tăng và giảm pass.
+- [x] Economy không reference database, clock hoặc WPF.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add economy and adventurer progression rules`.
 
 ## M03 — To-do domain, transaction và reward ledger
 
