@@ -58,6 +58,67 @@ namespace EasyToDoList.Infrastructure.Persistence.Migrations
                     b.ToTable("RewardTransactions", (string)null);
                 });
 
+            modelBuilder.Entity("EasyToDoList.Core.Pomodoro.PomodoroSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompletedFocusCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FocusMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LongBreakInterval")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LongBreakMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PauseReason")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("PausedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Phase")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlannedDurationSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("PlannedEndAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RemainingSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("RewardAppliedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ShortBreakMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("StartedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("PomodoroSessions", (string)null);
+                });
+
             modelBuilder.Entity("EasyToDoList.Core.Todos.TodoItem", b =>
                 {
                     b.Property<Guid>("Id")

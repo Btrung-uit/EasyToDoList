@@ -25,9 +25,9 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M00 | Đặc tả, architecture và asset prototype | Hoàn thành | — |
 | M01 | Solution foundation và SQLite bootstrap | Hoàn thành | M00 |
 | M02 | Economy, profile, level và rank | Hoàn thành | M01 |
-| M03 | To-do domain, transaction và reward ledger | Chưa bắt đầu | M02 |
-| M04 | Daily reconciliation, quá hạn và lịch sử | Chưa bắt đầu | M03 |
-| M05 | Pomodoro state machine và persistence | Chưa bắt đầu | M02, M03 |
+| M03 | To-do domain, transaction và reward ledger | Hoàn thành | M02 |
+| M04 | Daily reconciliation, quá hạn và lịch sử | Hoàn thành | M03 |
+| M05 | Pomodoro state machine và persistence | Hoàn thành | M02, M03 |
 | M06 | WPF shell và medieval design foundation | Chưa bắt đầu | M01, M05 |
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Chưa bắt đầu | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Chưa bắt đầu | M05, M06 |
@@ -149,23 +149,23 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Implement ba preset 15/3/15, 25/5/20, 50/10/25.
-- [ ] Validate custom focus 15–60 phút, short break 20–30%, long break 15–30 phút.
-- [ ] Implement state machine Focus/Break/Paused/Awaiting/Stopped/Skipped.
-- [ ] Timer dựa trên `PlannedEndAtUtc`, không decrement làm source of truth.
-- [ ] Start, Pause, Resume, Skip và Stop.
-- [ ] Snapshot configuration khi bắt đầu phiên.
-- [ ] Persist session và reward completion nguyên tử.
-- [ ] Crash/sleep/Exit khôi phục thành Paused và không tự thưởng.
+- [x] Implement ba preset 15/3/15, 25/5/20, 50/10/25.
+- [x] Validate custom focus 15–60 phút, short break 20–30%, long break 15–30 phút.
+- [x] Implement state machine Focus/Break/Paused/Awaiting/Stopped/Skipped.
+- [x] Timer dựa trên `PlannedEndAtUtc`, không decrement làm source of truth.
+- [x] Start, Pause, Resume, Skip và Stop.
+- [x] Snapshot configuration khi bắt đầu phiên.
+- [x] Persist session và reward completion nguyên tử.
+- [x] Crash/sleep/Exit khôi phục thành Paused và không tự thưởng.
 
 ### Hoàn thành khi
 
-- [ ] Invalid transition bị chặn.
-- [ ] Skip/Stop không nhận thưởng.
-- [ ] Hoàn thành Focus nhận thưởng đúng một lần.
-- [ ] Hai phiên 25 phút bằng một phiên 50 phút về tổng thưởng.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add recoverable pomodoro state machine`.
+- [x] Invalid transition bị chặn.
+- [x] Skip/Stop không nhận thưởng.
+- [x] Hoàn thành Focus nhận thưởng đúng một lần.
+- [x] Hai phiên 25 phút bằng một phiên 50 phút về tổng thưởng.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add recoverable pomodoro state machine`.
 
 ## M06 — WPF shell và medieval design foundation
 

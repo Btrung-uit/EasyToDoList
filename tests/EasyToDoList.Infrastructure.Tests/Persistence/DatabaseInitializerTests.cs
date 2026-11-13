@@ -1,5 +1,6 @@
 using EasyToDoList.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace EasyToDoList.Infrastructure.Tests.Persistence;
 
@@ -52,7 +53,7 @@ public sealed class DatabaseInitializerTests
     }
 
     [Fact]
-    public async Task Initialize_creates_todo_reward_tables_and_indexes()
+    public async Task Initialize_creates_domain_tables_and_indexes()
     {
         using var directory = new TemporaryDirectory();
         var databasePath = Path.Combine(directory.Path, "test.db");
@@ -64,6 +65,7 @@ public sealed class DatabaseInitializerTests
         await connection.OpenAsync();
         Assert.True(await SchemaObjectExistsAsync(connection, "table", "TodoItems"));
         Assert.True(await SchemaObjectExistsAsync(connection, "table", "RewardTransactions"));
+        Assert.True(await SchemaObjectExistsAsync(connection, "table", "PomodoroSessions"));
         Assert.True(await SchemaObjectExistsAsync(
             connection,
             "index",
@@ -76,6 +78,10 @@ public sealed class DatabaseInitializerTests
             connection,
             "index",
             "IX_RewardTransactions_CreatedAtUtc"));
+        Assert.True(await SchemaObjectExistsAsync(
+            connection,
+            "index",
+            "IX_PomodoroSessions_Status"));
 
         await using var uniqueCommand = connection.CreateCommand();
         uniqueCommand.CommandText = """
@@ -84,6 +90,17 @@ public sealed class DatabaseInitializerTests
             WHERE name = 'IX_RewardTransactions_IdempotencyKey'
             """;
         Assert.Equal(1L, (long)(await uniqueCommand.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public void Model_has_no_pending_migration_changes()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        using var db = new AppDbContext(options);
+
+        Assert.False(db.Database.HasPendingModelChanges());
     }
 
     private static async Task<(long Id, long TotalExperience, long CoinBalance)> ReadSingleProfileAsync(
