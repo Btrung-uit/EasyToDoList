@@ -25,6 +25,7 @@ public sealed class SqliteTodoStore(AppDbContext dbContext) : ITodoStore
         DateOnly localDate,
         CancellationToken cancellationToken) =>
         await dbContext.TodoItems
+            .AsNoTracking()
             .Where(item =>
                 item.Status != TodoStatus.Completed
                 && item.Status != TodoStatus.Cancelled
@@ -36,6 +37,7 @@ public sealed class SqliteTodoStore(AppDbContext dbContext) : ITodoStore
         DateOnly localDate,
         CancellationToken cancellationToken) =>
         await dbContext.TodoItems
+            .AsNoTracking()
             .Where(item =>
                 item.Status != TodoStatus.Completed
                 && item.Status != TodoStatus.Cancelled

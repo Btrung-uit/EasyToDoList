@@ -105,6 +105,39 @@ public sealed class DailyReconciliationTests
     }
 
     [Fact]
+    public async Task Reconcile_skips_candidate_moved_to_future_before_transaction()
+    {
+        var databaseName = $"EasyToDoList-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var first = await ReconciliationFixture.CreateAsync(Today.AddDays(-1), connectionString);
+        var todo = await first.Todos.CreateAsync(
+            new CreateTodoCommand("Rescheduled", Today, Today.AddDays(1)),
+            CancellationToken.None);
+        await using var second = await ReconciliationFixture.CreateAsync(Today.AddDays(-1), connectionString);
+        var innerStore = new SqliteTodoStore(first.Db);
+        var interleavingStore = new InterleavingTodoStore(
+            innerStore,
+            () => second.Todos.UpdateScheduleAsync(
+                new UpdateTodoScheduleCommand(todo.Id, Today.AddDays(5), Today.AddDays(6)),
+                CancellationToken.None));
+        var reconciliation = new DailyReconciliationService(
+            interleavingStore,
+            new SqliteRewardStore(first.Db),
+            new SqliteProfileStore(first.Db),
+            new EfAppUnitOfWork(first.Db),
+            new EconomyCalculator(),
+            first.Clock);
+
+        await reconciliation.ReconcileAsync(Today, CancellationToken.None);
+
+        first.Db.ChangeTracker.Clear();
+        var saved = await first.Db.TodoItems.SingleAsync(item => item.Id == todo.Id);
+        Assert.Equal(TodoStatus.Scheduled, saved.Status);
+        Assert.Equal(Today.AddDays(5), saved.StartDate);
+        Assert.Null(saved.RewardLockedAtUtc);
+    }
+
+    [Fact]
     public async Task Reconcile_ignores_completed_and_cancelled_todos()
     {
         await using var fixture = await ReconciliationFixture.CreateAsync(Today);
@@ -150,6 +183,26 @@ public sealed class DailyReconciliationTests
         Assert.Equal(2, result.Count);
         Assert.Contains(result, todo => todo.Id == active.Id && todo.Status == TodoStatus.Active);
         Assert.Contains(result, todo => todo.Id == overdue.Id && todo.Status == TodoStatus.Overdue);
+    }
+
+    [Fact]
+    public async Task GetToday_returns_fresh_status_reconciled_by_another_context()
+    {
+        var databaseName = $"EasyToDoList-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var first = await ReconciliationFixture.CreateAsync(Today, connectionString);
+        var todo = await first.Todos.CreateAsync(
+            new CreateTodoCommand("Task", Today, Today),
+            CancellationToken.None);
+        await using var second = await ReconciliationFixture.CreateAsync(Today, connectionString);
+        second.Clock.UtcNow = Now.AddDays(1);
+        await second.Reconciliation.ReconcileAsync(Today.AddDays(1), CancellationToken.None);
+
+        var result = await first.Todos.GetTodayAsync(Today.AddDays(1), CancellationToken.None);
+
+        var saved = Assert.Single(result, item => item.Id == todo.Id);
+        Assert.Equal(TodoStatus.Overdue, saved.Status);
+        Assert.NotNull(saved.OverduePenaltyAppliedAtUtc);
     }
 
     private sealed class ReconciliationFixture : IAsyncDisposable
@@ -228,5 +281,30 @@ public sealed class DailyReconciliationTests
         public DateTimeOffset UtcNow { get; set; }
 
         public DateOnly LocalToday { get; set; }
+    }
+
+    private sealed class InterleavingTodoStore(
+        ITodoStore inner,
+        Func<Task> afterCandidateRead) : ITodoStore
+    {
+        public Task AddAsync(TodoItem todo, CancellationToken cancellationToken) =>
+            inner.AddAsync(todo, cancellationToken);
+
+        public Task<TodoItem?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+            inner.GetAsync(id, cancellationToken);
+
+        public async Task<IReadOnlyList<Guid>> GetReconciliationCandidateIdsAsync(
+            DateOnly localDate,
+            CancellationToken cancellationToken)
+        {
+            var ids = await inner.GetReconciliationCandidateIdsAsync(localDate, cancellationToken);
+            await afterCandidateRead();
+            return ids;
+        }
+
+        public Task<IReadOnlyList<TodoItem>> GetTodayAsync(
+            DateOnly localDate,
+            CancellationToken cancellationToken) =>
+            inner.GetTodayAsync(localDate, cancellationToken);
     }
 }

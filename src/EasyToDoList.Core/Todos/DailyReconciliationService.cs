@@ -28,6 +28,11 @@ public sealed class DailyReconciliationService(
                     return true;
                 }
 
+                if (todo.StartDate > localDate)
+                {
+                    return true;
+                }
+
                 if (todo.RewardLockedAtUtc is null)
                 {
                     var durationDays = todo.Deadline.DayNumber - todo.StartDate.DayNumber + 1;
