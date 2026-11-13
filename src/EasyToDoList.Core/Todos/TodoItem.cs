@@ -150,6 +150,36 @@ public sealed class TodoItem
         Touch(nowUtc);
     }
 
+    public void ReconcileStatus(DateOnly localDate, DateTimeOffset nowUtc)
+    {
+        EnsureOpen();
+        if (Status == TodoStatus.Overdue || localDate < StartDate)
+        {
+            return;
+        }
+
+        var reconciledStatus = localDate > Deadline ? TodoStatus.Overdue : TodoStatus.Active;
+        if (Status != reconciledStatus)
+        {
+            Status = reconciledStatus;
+            Touch(nowUtc);
+        }
+    }
+
+    public void MarkOverduePenaltyApplied(DateTimeOffset nowUtc)
+    {
+        if (Status != TodoStatus.Overdue)
+        {
+            throw new InvalidOperationException("Overdue penalty requires an Overdue Todo.");
+        }
+
+        if (OverduePenaltyAppliedAtUtc is null)
+        {
+            OverduePenaltyAppliedAtUtc = nowUtc;
+            Touch(nowUtc);
+        }
+    }
+
     private static string NormalizeTitle(string title)
     {
         ArgumentNullException.ThrowIfNull(title);
