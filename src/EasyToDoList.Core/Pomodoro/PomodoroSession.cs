@@ -186,6 +186,17 @@ public sealed class PomodoroSession
         Touch();
     }
 
+    public void MarkRewardApplied(DateTimeOffset nowUtc)
+    {
+        if (CompletedFocusCount == 0 || Status != PomodoroStatus.Awaiting)
+        {
+            throw new InvalidOperationException("A focus reward can only follow a completed focus phase.");
+        }
+
+        RewardAppliedAtUtc = nowUtc;
+        Touch();
+    }
+
     public void Skip(DateTimeOffset nowUtc)
     {
         EnsureActive("A terminal session cannot be skipped.");

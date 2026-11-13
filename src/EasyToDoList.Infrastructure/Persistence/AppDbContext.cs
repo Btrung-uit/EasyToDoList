@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using EasyToDoList.Core.Economy;
+using EasyToDoList.Core.Pomodoro;
 using EasyToDoList.Core.Todos;
 
 namespace EasyToDoList.Infrastructure.Persistence;
@@ -11,6 +12,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
 
     public DbSet<RewardTransaction> RewardTransactions => Set<RewardTransaction>();
+
+    public DbSet<PomodoroSession> PomodoroSessions => Set<PomodoroSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,5 +44,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         reward.Property(transaction => transaction.IdempotencyKey).HasMaxLength(200).IsRequired();
         reward.HasIndex(transaction => transaction.IdempotencyKey).IsUnique();
         reward.HasIndex(transaction => transaction.CreatedAtUtc);
+
+        var pomodoro = modelBuilder.Entity<PomodoroSession>();
+        pomodoro.ToTable("PomodoroSessions");
+        pomodoro.HasKey(session => session.Id);
+        pomodoro.Property(session => session.Id).ValueGeneratedNever();
+        pomodoro.Property(session => session.RowVersion).IsConcurrencyToken();
+        pomodoro.Ignore(session => session.Configuration);
+        pomodoro.HasIndex(session => session.Status);
     }
 }
