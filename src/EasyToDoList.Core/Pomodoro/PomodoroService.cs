@@ -43,16 +43,16 @@ public sealed class PomodoroService(
     }
 
     public Task PauseAsync(PauseReason reason, CancellationToken cancellationToken) =>
-        MutateAsync(session => session.Pause(clock.UtcNow, reason), cancellationToken);
+        ControlAsync((session, nowUtc) => session.Pause(nowUtc, reason), cancellationToken);
 
     public Task ResumeAsync(CancellationToken cancellationToken) =>
         MutateAsync(session => session.Resume(clock.UtcNow), cancellationToken);
 
     public Task SkipAsync(CancellationToken cancellationToken) =>
-        MutateAsync(session => session.Skip(clock.UtcNow), cancellationToken);
+        ControlAsync((session, nowUtc) => session.Skip(nowUtc), cancellationToken);
 
     public Task StopAsync(CancellationToken cancellationToken) =>
-        MutateAsync(session => session.Stop(clock.UtcNow), cancellationToken);
+        ControlAsync((session, nowUtc) => session.Stop(nowUtc), cancellationToken);
 
     public Task TickAsync(CancellationToken cancellationToken) =>
         ExecuteAndRefreshAsync(async ct =>
@@ -63,16 +63,10 @@ public sealed class PomodoroService(
                 return session;
             }
 
-            var completedPhase = session.CompleteIfElapsed(clock.UtcNow);
-            if (completedPhase is null)
+            var nowUtc = clock.UtcNow;
+            if (!await CompleteElapsedPhaseAsync(session, nowUtc, ct))
             {
-                session.Checkpoint(clock.UtcNow);
-                return session;
-            }
-
-            if (completedPhase == PomodoroPhase.Focus)
-            {
-                await ApplyFocusRewardAsync(session, ct);
+                session.Checkpoint(nowUtc);
             }
 
             return session;
@@ -110,8 +104,45 @@ public sealed class PomodoroService(
             return session;
         }, cancellationToken);
 
+    private Task ControlAsync(
+        Action<PomodoroSession, DateTimeOffset> control,
+        CancellationToken cancellationToken) =>
+        ExecuteAndRefreshAsync(async ct =>
+        {
+            var session = await GetRequiredActiveAsync(ct);
+            var nowUtc = clock.UtcNow;
+            if (session.Status == PomodoroStatus.Running
+                && await CompleteElapsedPhaseAsync(session, nowUtc, ct))
+            {
+                return session;
+            }
+
+            control(session, nowUtc);
+            return session;
+        }, cancellationToken);
+
+    private async Task<bool> CompleteElapsedPhaseAsync(
+        PomodoroSession session,
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken)
+    {
+        var completedPhase = session.CompleteIfElapsed(nowUtc);
+        if (completedPhase is null)
+        {
+            return false;
+        }
+
+        if (completedPhase == PomodoroPhase.Focus)
+        {
+            await ApplyFocusRewardAsync(session, nowUtc, cancellationToken);
+        }
+
+        return true;
+    }
+
     private async Task ApplyFocusRewardAsync(
         PomodoroSession session,
+        DateTimeOffset nowUtc,
         CancellationToken cancellationToken)
     {
         var idempotencyKey = $"pomodoro:{session.Id:N}:focus:{session.CompletedFocusCount}";
@@ -132,9 +163,9 @@ public sealed class PomodoroService(
                 RewardReason.Completion,
                 appliedReward,
                 idempotencyKey,
-                clock.UtcNow),
+                nowUtc),
             cancellationToken);
-        session.MarkRewardApplied(clock.UtcNow);
+        session.MarkRewardApplied(nowUtc);
     }
 
     private async Task<PomodoroSession> GetRequiredActiveAsync(CancellationToken cancellationToken) =>

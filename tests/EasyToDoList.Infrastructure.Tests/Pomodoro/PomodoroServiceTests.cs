@@ -191,6 +191,48 @@ public sealed class PomodoroServiceTests
         Assert.Equal(0, (await restarted.Db.PlayerProfiles.SingleAsync()).TotalExperience);
     }
 
+    [Theory]
+    [InlineData(ElapsedControl.Pause)]
+    [InlineData(ElapsedControl.Skip)]
+    [InlineData(ElapsedControl.Stop)]
+    public async Task Control_at_focus_deadline_completes_and_rewards_before_applying_next_phase(
+        ElapsedControl control)
+    {
+        await using var fixture = await PomodoroFixture.CreateAsync();
+        await fixture.Service.StartAsync(PomodoroConfiguration.Standard, CancellationToken.None);
+        fixture.Clock.UtcNow = Now.AddMinutes(25);
+
+        await InvokeControlAsync(fixture.Service, control);
+        await fixture.Service.TickAsync(CancellationToken.None);
+
+        Assert.Equal(PomodoroPhase.ShortBreak, fixture.Service.Current!.Phase);
+        Assert.Equal(PomodoroStatus.Awaiting, fixture.Service.Current.Status);
+        Assert.Equal(10, (await fixture.Db.PlayerProfiles.SingleAsync()).TotalExperience);
+        Assert.Single(await fixture.Db.RewardTransactions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Reused_context_reloads_phase_started_by_another_context()
+    {
+        var databaseName = $"EasyToDoList-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var first = await PomodoroFixture.CreateAsync(connectionString);
+        await using var second = await PomodoroFixture.CreateAsync(connectionString);
+        await first.Service.StartAsync(PomodoroConfiguration.Standard, CancellationToken.None);
+        first.Clock.UtcNow = Now.AddMinutes(25);
+        await first.Service.TickAsync(CancellationToken.None);
+        second.Clock.UtcNow = Now.AddMinutes(25);
+        await second.Service.StartAsync(PomodoroConfiguration.DeepFocus, CancellationToken.None);
+        first.Clock.UtcNow = Now.AddMinutes(30);
+
+        await first.Service.TickAsync(CancellationToken.None);
+
+        Assert.Equal(PomodoroPhase.Focus, first.Service.Current!.Phase);
+        Assert.Equal(PomodoroStatus.Awaiting, first.Service.Current.Status);
+        Assert.Equal(1, first.Service.Current.CompletedFocusCount);
+        Assert.Single(await first.Db.RewardTransactions.ToListAsync());
+    }
+
     private sealed class PomodoroFixture : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
@@ -246,6 +288,22 @@ public sealed class PomodoroServiceTests
             await Db.DisposeAsync();
             await _connection.DisposeAsync();
         }
+    }
+
+    private static Task InvokeControlAsync(PomodoroService service, ElapsedControl control) =>
+        control switch
+        {
+            ElapsedControl.Pause => service.PauseAsync(PauseReason.User, CancellationToken.None),
+            ElapsedControl.Skip => service.SkipAsync(CancellationToken.None),
+            ElapsedControl.Stop => service.StopAsync(CancellationToken.None),
+            _ => throw new ArgumentOutOfRangeException(nameof(control)),
+        };
+
+    public enum ElapsedControl
+    {
+        Pause,
+        Skip,
+        Stop,
     }
 
     private sealed class FakeClock : IClock

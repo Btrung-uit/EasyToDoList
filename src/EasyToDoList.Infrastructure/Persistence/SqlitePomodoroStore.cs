@@ -10,10 +10,19 @@ public sealed class SqlitePomodoroStore(AppDbContext dbContext) : IPomodoroStore
         CancellationToken cancellationToken) =>
         await dbContext.PomodoroSessions.AddAsync(session, cancellationToken);
 
-    public Task<PomodoroSession?> GetActiveAsync(CancellationToken cancellationToken) =>
-        dbContext.PomodoroSessions
+    public async Task<PomodoroSession?> GetActiveAsync(CancellationToken cancellationToken)
+    {
+        var session = await dbContext.PomodoroSessions
             .Where(session => session.Status == PomodoroStatus.Running
                 || session.Status == PomodoroStatus.Paused
                 || session.Status == PomodoroStatus.Awaiting)
             .SingleOrDefaultAsync(cancellationToken);
+
+        if (session is not null)
+        {
+            await dbContext.Entry(session).ReloadAsync(cancellationToken);
+        }
+
+        return session;
+    }
 }
