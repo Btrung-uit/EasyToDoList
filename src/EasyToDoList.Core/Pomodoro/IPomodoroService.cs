@@ -15,4 +15,6 @@ public interface IPomodoroService
     Task StopAsync(CancellationToken cancellationToken);
 
     Task TickAsync(CancellationToken cancellationToken);
+
+    Task RecoverAsync(CancellationToken cancellationToken);
 }

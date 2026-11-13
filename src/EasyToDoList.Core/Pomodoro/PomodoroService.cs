@@ -78,6 +78,28 @@ public sealed class PomodoroService(
             return session;
         }, cancellationToken);
 
+    public async Task RecoverAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _current = await unitOfWork.ExecuteAsync(async ct =>
+            {
+                var session = await pomodoroStore.GetActiveAsync(ct);
+                if (session?.Status == PomodoroStatus.Running)
+                {
+                    session.RecoverAsPaused(clock.UtcNow);
+                }
+
+                return session;
+            }, cancellationToken);
+        }
+        catch
+        {
+            _current = await pomodoroStore.GetActiveAsync(CancellationToken.None);
+            throw;
+        }
+    }
+
     private Task MutateAsync(
         Action<PomodoroSession> mutation,
         CancellationToken cancellationToken) =>

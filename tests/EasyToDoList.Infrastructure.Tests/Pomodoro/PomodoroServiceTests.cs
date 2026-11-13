@@ -169,6 +169,28 @@ public sealed class PomodoroServiceTests
         Assert.Single(await fixture.Db.RewardTransactions.ToListAsync());
     }
 
+    [Fact]
+    public async Task Recover_pauses_running_checkpoint_without_counting_offline_time_or_rewarding()
+    {
+        var databaseName = $"EasyToDoList-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var crashed = await PomodoroFixture.CreateAsync(connectionString);
+        await crashed.Service.StartAsync(PomodoroConfiguration.Standard, CancellationToken.None);
+        crashed.Clock.UtcNow = Now.AddMinutes(5);
+        await crashed.Service.TickAsync(CancellationToken.None);
+        await using var restarted = await PomodoroFixture.CreateAsync(connectionString);
+        restarted.Clock.UtcNow = Now.AddHours(3);
+
+        await restarted.Service.RecoverAsync(CancellationToken.None);
+
+        Assert.Equal(PomodoroStatus.Paused, restarted.Service.Current!.Status);
+        Assert.Equal(PauseReason.CrashRecovery, restarted.Service.Current.PauseReason);
+        Assert.Equal(20 * 60, restarted.Service.Current.RemainingSeconds);
+        Assert.Null(restarted.Service.Current.PlannedEndAtUtc);
+        Assert.Empty(await restarted.Db.RewardTransactions.ToListAsync());
+        Assert.Equal(0, (await restarted.Db.PlayerProfiles.SingleAsync()).TotalExperience);
+    }
+
     private sealed class PomodoroFixture : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
@@ -191,9 +213,14 @@ public sealed class PomodoroServiceTests
 
         public PomodoroService Service { get; }
 
-        public static async Task<PomodoroFixture> CreateAsync(SaveChangesInterceptor? interceptor = null)
+        public static Task<PomodoroFixture> CreateAsync(SaveChangesInterceptor? interceptor = null) =>
+            CreateAsync("Data Source=:memory:", interceptor);
+
+        public static async Task<PomodoroFixture> CreateAsync(
+            string connectionString,
+            SaveChangesInterceptor? interceptor = null)
         {
-            var connection = new SqliteConnection("Data Source=:memory:");
+            var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
             var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection);
             if (interceptor is not null)

@@ -197,6 +197,16 @@ public sealed class PomodoroSession
         Touch();
     }
 
+    public void RecoverAsPaused(DateTimeOffset nowUtc)
+    {
+        EnsureStatus(PomodoroStatus.Running, "Only a running phase needs crash recovery.");
+        PlannedEndAtUtc = null;
+        PausedAtUtc = nowUtc;
+        PauseReason = global::EasyToDoList.Core.Pomodoro.PauseReason.CrashRecovery;
+        Status = PomodoroStatus.Paused;
+        Touch();
+    }
+
     public void Skip(DateTimeOffset nowUtc)
     {
         EnsureActive("A terminal session cannot be skipped.");
