@@ -5,6 +5,12 @@
     <ProjectReference Include="..\EasyToDoList.Infrastructure\EasyToDoList.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="..\..\assets\pixel-art\mvp\backgrounds\guild-valley.png">
+      <Link>Assets\Backgrounds\guild-valley.png</Link>
+    </Resource>
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>

@@ -28,7 +28,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M03 | To-do domain, transaction và reward ledger | Hoàn thành | M02 |
 | M04 | Daily reconciliation, quá hạn và lịch sử | Hoàn thành | M03 |
 | M05 | Pomodoro state machine và persistence | Hoàn thành | M02, M03 |
-| M06 | WPF shell và medieval design foundation | Chưa bắt đầu | M01, M05 |
+| M06 | WPF shell và medieval design foundation | Hoàn thành | M01, M05 |
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Chưa bắt đầu | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Chưa bắt đầu | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Chưa bắt đầu | M03, M07, M08 |
@@ -173,22 +173,22 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Implement `ShellViewModel`, `ShellDisplayMode`, `OverlayMode`.
-- [ ] Một `MainWindow`, không tạo Dashboard/Overlay window riêng.
-- [ ] Dashboard không Topmost; Overlay Topmost, compact và draggable.
-- [ ] `X` chuyển HiddenToTray; Exit mới đóng tiến trình.
-- [ ] Pomodoro service sống xuyên suốt khi đổi mode.
-- [ ] Tạo resource dictionaries cho màu, typography, spacing và controls.
-- [ ] Áp dụng màu chữ tương phản đã chốt: nâu gần đen trên giấy sáng, kem trên gỗ tối.
-- [ ] Tích hợp background Guild Valley ở mức nền, chưa thêm animation.
+- [x] Implement `ShellViewModel`, `ShellDisplayMode`, `OverlayMode`.
+- [x] Một `MainWindow`, không tạo Dashboard/Overlay window riêng.
+- [x] Dashboard không Topmost; Overlay Topmost, compact và draggable.
+- [x] `X` chuyển HiddenToTray; Exit mới đóng tiến trình.
+- [x] Pomodoro service sống xuyên suốt khi đổi mode.
+- [x] Tạo resource dictionaries cho màu, typography, spacing và controls.
+- [x] Áp dụng màu chữ tương phản đã chốt: nâu gần đen trên giấy sáng, kem trên gỗ tối.
+- [x] Tích hợp background Guild Valley ở mức nền, chưa thêm animation.
 
 ### Hoàn thành khi
 
-- [ ] Chỉ một mode hiển thị tại một thời điểm.
-- [ ] Chuyển mode không tạo lại service/state.
-- [ ] Keyboard focus cơ bản hoạt động.
-- [ ] Shell tests, `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add guild themed single-window shell`.
+- [x] Chỉ một mode hiển thị tại một thời điểm.
+- [x] Chuyển mode không tạo lại service/state.
+- [x] Keyboard focus cơ bản hoạt động.
+- [x] Shell tests, `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add guild themed single-window shell`.
 
 ## M07 — Dashboard, To-do UI, lịch sử và Settings
 

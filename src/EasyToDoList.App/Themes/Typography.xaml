@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="GuildUiFont">Segoe UI</FontFamily>
+
+    <Style x:Key="GuildDisplayTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource GuildUiFont}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource GuildCreamBrush}" />
+    </Style>
+
+    <Style x:Key="GuildHeadingTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource GuildUiFont}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource GuildInkBrush}" />
+    </Style>
+
+    <Style x:Key="GuildBodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource GuildUiFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource GuildInkBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="GuildWoodBodyTextStyle" TargetType="TextBlock"
+           BasedOn="{StaticResource GuildBodyTextStyle}">
+        <Setter Property="Foreground" Value="{StaticResource GuildCreamBrush}" />
+    </Style>
+</ResourceDictionary>

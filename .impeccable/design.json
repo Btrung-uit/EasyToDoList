@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T08:00:00+07:00",
+  "title": "Design System: EasyToDoList",
+  "extensions": {
+    "colorMeta": {
+      "guild-ink": { "role": "neutral", "displayName": "Quest Ink", "canonical": "#2A1B14", "tonalRamp": ["#211611", "#35241B", "#52392B", "#745543", "#9B7862", "#C5A895", "#E5D3C6", "#F7F0EB"] },
+      "parchment": { "role": "neutral", "displayName": "Parchment", "canonical": "#F6E2B9", "tonalRamp": ["#2C2518", "#51452D", "#776644", "#A18A5F", "#C9AD7C", "#E2C794", "#F6E2B9", "#FFF7E7"] },
+      "wood": { "role": "primary", "displayName": "Guild Wood", "canonical": "#3A2418", "tonalRamp": ["#21140D", "#3A2418", "#5A3926", "#7C543C", "#A1765C", "#C5A28D", "#E3CEC1", "#F6EFEB"] },
+      "cream": { "role": "neutral", "displayName": "Campfire Cream", "canonical": "#FFF2D0", "tonalRamp": ["#2D281D", "#514936", "#786D50", "#A0926D", "#C9B98B", "#E7D7AB", "#FFF2D0", "#FFFBF0"] },
+      "gold": { "role": "secondary", "displayName": "Quest Gold", "canonical": "#E2A93B", "tonalRamp": ["#2B210E", "#503C17", "#775921", "#A0782B", "#C79633", "#E2A93B", "#F1CC7C", "#FFF0C6"] },
+      "moss": { "role": "tertiary", "displayName": "Guild Moss", "canonical": "#526A3A", "tonalRamp": ["#182014", "#2B391F", "#40532E", "#526A3A", "#728B58", "#9CB083", "#CCD8BE", "#F0F4EB"] },
+      "danger": { "role": "secondary", "displayName": "Warning Crimson", "canonical": "#9B3F32", "tonalRamp": ["#2A120F", "#4D211B", "#743127", "#9B3F32", "#BD6255", "#D89288", "#EBC3BD", "#F9ECEA"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Guild Title", "purpose": "Shell title only." },
+      "heading": { "displayName": "Board Heading", "purpose": "Panel and mode headings." },
+      "body": { "displayName": "Utility Body", "purpose": "Tasks, labels, data, and controls." }
+    },
+    "motion": [
+      { "name": "state-feedback", "value": "150-250ms", "purpose": "Future hover and state transitions only; M06 remains static." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Parchment Button",
+      "kind": "button",
+      "refersTo": "button-parchment",
+      "description": "Primary action on wood surfaces.",
+      "html": "<button class=\"ds-btn-parchment\">OPEN DASHBOARD</button>",
+      "css": ".ds-btn-parchment { background:#F6E2B9; color:#2A1B14; border:2px solid #3A2418; border-radius:3px; padding:9px 16px; min-height:40px; font:600 14px 'Segoe UI',sans-serif; } .ds-btn-parchment:hover { background:#E2A93B; } .ds-btn-parchment:focus-visible { outline:2px dashed #E2A93B; outline-offset:2px; }"
+    },
+    {
+      "name": "Wood Button",
+      "kind": "button",
+      "refersTo": "button-wood",
+      "description": "Mode-changing action within the guild shell.",
+      "html": "<button class=\"ds-btn-wood\">OVERLAY</button>",
+      "css": ".ds-btn-wood { background:#694228; color:#FFF2D0; border:2px solid #E2A93B; border-radius:3px; padding:9px 16px; min-height:40px; font:600 14px 'Segoe UI',sans-serif; } .ds-btn-wood:hover { background:#E2A93B; color:#2A1B14; } .ds-btn-wood:focus-visible { outline:2px dashed #E2A93B; outline-offset:2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "description": "Explicit process exit action.",
+      "html": "<button class=\"ds-btn-danger\">EXIT</button>",
+      "css": ".ds-btn-danger { background:#9B3F32; color:#FFF2D0; border:2px solid #FFF2D0; border-radius:3px; padding:9px 16px; min-height:40px; font:600 14px 'Segoe UI',sans-serif; } .ds-btn-danger:hover { background:#E2A93B; color:#2A1B14; } .ds-btn-danger:focus-visible { outline:2px dashed #E2A93B; outline-offset:2px; }"
+    },
+    {
+      "name": "Parchment Panel",
+      "kind": "card",
+      "refersTo": "panel-parchment",
+      "description": "Primary reading and task surface.",
+      "html": "<section class=\"ds-panel\"><h2>Today's quests</h2><p>Your tasks appear here.</p></section>",
+      "css": ".ds-panel { background:#F6E2B9; color:#2A1B14; border:3px solid #3A2418; border-radius:5px; padding:24px; font:400 14px/1.5 'Segoe UI',sans-serif; } .ds-panel h2 { margin:0 0 16px; font-size:20px; line-height:1.3; }"
+    },
+    {
+      "name": "Journey Navigation",
+      "kind": "nav",
+      "description": "Short vertical Dashboard navigation.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-active\" href=\"#\">Today</a><a href=\"#\">History</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav { display:grid; gap:12px; background:#F6E2B9; color:#2A1B14; padding:24px; font:400 14px 'Segoe UI',sans-serif; } .ds-nav a { color:inherit; text-decoration:none; } .ds-nav a:hover { color:#526A3A; } .ds-nav a:focus-visible { outline:2px dashed #E2A93B; outline-offset:2px; } .ds-nav-active { font-weight:600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Guild Quest Board",
+    "overview": "The interface feels like a practical notice board inside a bright adventurer guild. Medieval flavor comes from material, palette, copy, and approved pixel art while familiar Windows controls keep the utility immediate.",
+    "keyCharacteristics": ["High-contrast parchment and wood surfaces", "Visible gold focus feedback", "One visual mode at a time", "Compact nearly square corners"],
+    "rules": [
+      { "name": "The Two-Ink Rule", "body": "Use Quest Ink on parchment and Campfire Cream on wood.", "section": "colors" },
+      { "name": "The Utility First Rule", "body": "Do not use decorative lettering for controls or data.", "section": "typography" },
+      { "name": "The Flat Board Rule", "body": "Panels remain flat at rest.", "section": "elevation" }
+    ],
+    "dos": ["Do keep functional text on opaque surfaces.", "Do preserve nearest-neighbor pixel art.", "Do share one material vocabulary across modes."],
+    "donts": ["Don't place body text directly on the illustration.", "Don't use gold as decorative body copy.", "Don't add ambient motion before Reduced Motion support."]
+  }
+}
