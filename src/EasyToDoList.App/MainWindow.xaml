@@ -1,12 +1,233 @@
-﻿<Window x:Class="EasyToDoList.App.MainWindow"
+<Window x:Class="EasyToDoList.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:EasyToDoList.App"
+        xmlns:shell="clr-namespace:EasyToDoList.App.Shell"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="EasyToDoList — Hội quán nhiệm vụ"
+        Width="1180" Height="760" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource GuildWoodBrush}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Closing="OnClosing">
     <Grid>
+        <Image Source="/EasyToDoList.App;component/Assets/Backgrounds/guild-valley.png"
+               Stretch="UniformToFill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        <Border Background="#3D182319" />
 
+        <Grid Margin="32">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DisplayMode}" Value="{x:Static shell:ShellDisplayMode.Dashboard}">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="24" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Padding="24,18"
+                    Background="{StaticResource GuildWoodBrush}"
+                    BorderBrush="{StaticResource GuildGoldBrush}"
+                    BorderThickness="3" CornerRadius="5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource GuildDisplayTextStyle}" Text="HỘI QUÁN NHIỆM VỤ" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Style="{StaticResource GuildWoodBodyTextStyle}"
+                                   Text="Lập kế hoạch hôm nay, giữ nhịp tập trung và tiến bước như một mạo hiểm giả." />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                        <Button Margin="0,0,8,0"
+                                Command="{Binding ShowOverlayCommand}"
+                                CommandParameter="{x:Static shell:OverlayMode.Todo}"
+                                Content="Thu gọn thành Overlay"
+                                Style="{StaticResource GuildWoodButtonStyle}" />
+                        <Button Command="{Binding ExitCommand}" Content="Thoát" Style="{StaticResource GuildDangerButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="260" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource GuildPanelStyle}">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,16" Style="{StaticResource GuildHeadingTextStyle}" Text="Sổ hành trình" />
+                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" FontWeight="SemiBold" Text="Hôm nay" />
+                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" Text="Lịch sử" />
+                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" Text="Hồ sơ mạo hiểm giả" />
+                        <TextBlock Style="{StaticResource GuildBodyTextStyle}" Text="Cài đặt" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource GuildPanelStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Bảng nhiệm vụ hôm nay" />
+                        <StackPanel Grid.Row="1" MaxWidth="520" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock HorizontalAlignment="Center" FontSize="42" FontWeight="Bold"
+                                       Foreground="{StaticResource GuildMossBrush}" Text="0" />
+                            <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" TextAlignment="Center"
+                                       Style="{StaticResource GuildBodyTextStyle}"
+                                       Text="Các nhiệm vụ trong ngày sẽ được niêm yết tại đây." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="4" Padding="20"
+                        Background="{StaticResource GuildWoodBrush}"
+                        BorderBrush="{StaticResource GuildGoldBrush}"
+                        BorderThickness="3" CornerRadius="5">
+                    <StackPanel>
+                        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource GuildCreamBrush}" Text="Mạo hiểm giả" />
+                        <TextBlock Margin="0,6,0,0" Style="{StaticResource GuildWoodBodyTextStyle}" Text="Hạng F · Cấp 1" />
+                        <Border Height="2" Margin="0,20" Background="{StaticResource GuildGoldBrush}" />
+                        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource GuildCreamBrush}" Text="Pomodoro" />
+                        <TextBlock Margin="0,6,0,18" Style="{StaticResource GuildWoodBodyTextStyle}" Text="Chưa bắt đầu phiên tập trung." />
+                        <Button Command="{Binding ShowOverlayCommand}"
+                                CommandParameter="{x:Static shell:OverlayMode.Pomodoro}"
+                                Content="Mở đồng hồ"
+                                Style="{StaticResource GuildButtonStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Margin="14" Padding="14"
+                Background="{StaticResource GuildWoodBrush}"
+                BorderBrush="{StaticResource GuildGoldBrush}"
+                BorderThickness="3" CornerRadius="5">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DisplayMode}" Value="{x:Static shell:ShellDisplayMode.Overlay}">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{Binding ShowOverlayCommand}"
+                            CommandParameter="{x:Static shell:OverlayMode.Todo}"
+                            Content="Việc cần làm" Style="{StaticResource GuildButtonStyle}" />
+                    <Button Grid.Column="2" Command="{Binding ShowOverlayCommand}"
+                            CommandParameter="{x:Static shell:OverlayMode.Pomodoro}"
+                            Content="Pomodoro" Style="{StaticResource GuildButtonStyle}" />
+                </Grid>
+
+                <Border Grid.Row="2" Style="{StaticResource GuildPanelStyle}">
+                    <Grid>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OverlayMode}" Value="{x:Static shell:OverlayMode.Todo}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hiện tại" />
+                            <TextBlock Margin="0,12,0,0" TextAlignment="Center"
+                                       Style="{StaticResource GuildBodyTextStyle}"
+                                       Text="Danh sách gọn sẽ xuất hiện tại đây." />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OverlayMode}" Value="{x:Static shell:OverlayMode.Pomodoro}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}" Text="Sẵn sàng tập trung" />
+                            <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center"
+                                       FontSize="38" FontWeight="Bold"
+                                       Foreground="{StaticResource GuildInkBrush}" Text="25:00" />
+                            <TextBlock Margin="0,10,0,0" TextAlignment="Center"
+                                       Style="{StaticResource GuildBodyTextStyle}"
+                                       Text="Điều khiển phiên tập trung sẽ được nối ở bước tiếp theo." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{Binding ShowDashboardCommand}" Content="Mở Dashboard" Style="{StaticResource GuildButtonStyle}" />
+                    <Button Grid.Column="2" Command="{Binding HideToTrayCommand}" Content="Ẩn" Style="{StaticResource GuildWoodButtonStyle}" />
+                    <Button Grid.Column="4" Command="{Binding ExitCommand}" Content="Thoát" Style="{StaticResource GuildDangerButtonStyle}" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border Margin="24"
+                Padding="12"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Background="{StaticResource GuildDangerBrush}"
+                BorderBrush="{StaticResource GuildCreamBrush}"
+                BorderThickness="2"
+                CornerRadius="3">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ExitErrorMessage}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock MaxWidth="520"
+                       Foreground="{StaticResource GuildCreamBrush}"
+                       FontWeight="SemiBold"
+                       Text="{Binding ExitErrorMessage}"
+                       TextWrapping="Wrap" />
+        </Border>
     </Grid>
 </Window>
