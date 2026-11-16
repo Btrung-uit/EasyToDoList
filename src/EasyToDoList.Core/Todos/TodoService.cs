@@ -44,6 +44,21 @@ public sealed class TodoService(
             return todo;
         }, cancellationToken);
 
+    public Task<TodoItem> UpdateAsync(
+        UpdateTodoCommand command,
+        CancellationToken cancellationToken) =>
+        unitOfWork.ExecuteAsync(async ct =>
+        {
+            var todo = await GetRequiredAsync(command.TodoId, ct);
+            todo.UpdateDetails(
+                command.Title,
+                command.StartDate,
+                command.Deadline,
+                clock.UtcNow,
+                clock.LocalToday);
+            return todo;
+        }, cancellationToken);
+
     public Task<TodoCompletionResult> CompleteAsync(
         Guid todoId,
         CancellationToken cancellationToken) =>

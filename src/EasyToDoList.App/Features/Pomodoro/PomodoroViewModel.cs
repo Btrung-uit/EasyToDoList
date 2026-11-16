@@ -1,0 +1,39 @@
+using EasyToDoList.App.Presentation;
+using EasyToDoList.App.Shell;
+using EasyToDoList.Core.Pomodoro;
+using System.Windows.Input;
+
+namespace EasyToDoList.App.Features.Pomodoro;
+
+public sealed class PomodoroViewModel : ViewModelBase
+{
+    private int _focusMinutes = 25;
+    private int _shortBreakMinutes = 5;
+    private int _longBreakMinutes = 20;
+    private int _longBreakInterval = 4;
+    private string? _validationMessage;
+
+    public PomodoroViewModel() => ValidateCommand = new RelayCommand(_ => TryBuildConfiguration());
+
+    public int FocusMinutes { get => _focusMinutes; set => SetField(ref _focusMinutes, value); }
+    public int ShortBreakMinutes { get => _shortBreakMinutes; set => SetField(ref _shortBreakMinutes, value); }
+    public int LongBreakMinutes { get => _longBreakMinutes; set => SetField(ref _longBreakMinutes, value); }
+    public int LongBreakInterval { get => _longBreakInterval; set => SetField(ref _longBreakInterval, value); }
+    public string? ValidationMessage { get => _validationMessage; private set => SetField(ref _validationMessage, value); }
+    public ICommand ValidateCommand { get; }
+
+    public PomodoroConfiguration? TryBuildConfiguration()
+    {
+        try
+        {
+            var result = new PomodoroConfiguration(FocusMinutes, ShortBreakMinutes, LongBreakMinutes, LongBreakInterval);
+            ValidationMessage = null;
+            return result;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            ValidationMessage = "Tập trung 15–60 phút; nghỉ ngắn bằng 20–30%; nghỉ dài 15–30 phút và sau 3–4 phiên.";
+            return null;
+        }
+    }
+}

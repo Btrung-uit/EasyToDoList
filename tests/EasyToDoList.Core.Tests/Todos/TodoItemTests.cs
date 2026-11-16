@@ -55,6 +55,40 @@ public sealed class TodoItemTests
     }
 
     [Fact]
+    public void UpdateDetails_changes_title_and_schedule_atomically()
+    {
+        var todo = CreateActiveTodo();
+
+        todo.UpdateDetails(
+            "  Nhiệm vụ mới  ",
+            Today.AddDays(1),
+            Today.AddDays(3),
+            Now.AddMinutes(1),
+            Today);
+
+        Assert.Equal("Nhiệm vụ mới", todo.Title);
+        Assert.Equal(Today.AddDays(1), todo.StartDate);
+        Assert.Equal(Today.AddDays(3), todo.Deadline);
+    }
+
+    [Fact]
+    public void UpdateDetails_rejects_blank_title_without_changing_schedule()
+    {
+        var todo = CreateActiveTodo();
+
+        Assert.Throws<ArgumentException>(() => todo.UpdateDetails(
+            "   ",
+            Today.AddDays(1),
+            Today.AddDays(3),
+            Now.AddMinutes(1),
+            Today));
+
+        Assert.Equal("Task", todo.Title);
+        Assert.Equal(Today, todo.StartDate);
+        Assert.Equal(Today.AddDays(1), todo.Deadline);
+    }
+
+    [Fact]
     public void UpdateSchedule_after_reward_lock_allows_deadline_change_without_increasing_snapshot()
     {
         var todo = CreateActiveTodo();

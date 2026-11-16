@@ -77,20 +77,30 @@ public sealed class TodoItem
         DateOnly startDate,
         DateOnly deadline,
         DateTimeOffset nowUtc,
+        DateOnly localToday) =>
+        UpdateDetails(Title, startDate, deadline, nowUtc, localToday);
+
+    public void UpdateDetails(
+        string title,
+        DateOnly startDate,
+        DateOnly deadline,
+        DateTimeOffset nowUtc,
         DateOnly localToday)
     {
         EnsureOpen();
+        var normalizedTitle = NormalizeTitle(title);
+        ValidateSchedule(startDate, deadline);
+
         if (RewardLockedAtUtc is not null)
         {
             if (startDate != StartDate)
             {
                 throw new InvalidOperationException("Start date cannot change after reward lock.");
             }
-
-            ForfeitedEarlyBonus |= deadline > Deadline;
         }
 
-        ValidateSchedule(startDate, deadline);
+        ForfeitedEarlyBonus |= RewardLockedAtUtc is not null && deadline > Deadline;
+        Title = normalizedTitle;
         StartDate = startDate;
         Deadline = deadline;
         Status = StatusFor(startDate, deadline, localToday);

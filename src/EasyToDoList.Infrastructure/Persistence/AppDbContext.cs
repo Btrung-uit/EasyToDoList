@@ -15,6 +15,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<PomodoroSession> PomodoroSessions => Set<PomodoroSession>();
 
+    public DbSet<AppSettingsRow> AppSettings => Set<AppSettingsRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var profile = modelBuilder.Entity<PlayerProfileRow>();
@@ -52,5 +54,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         pomodoro.Property(session => session.RowVersion).IsConcurrencyToken();
         pomodoro.Ignore(session => session.Configuration);
         pomodoro.HasIndex(session => session.Status);
+
+        var settings = modelBuilder.Entity<AppSettingsRow>();
+        settings.ToTable("AppSettings");
+        settings.HasKey(row => row.Id);
+        settings.Property(row => row.Id).ValueGeneratedNever();
+        settings.Property(row => row.SettingsJson).IsRequired();
     }
 }

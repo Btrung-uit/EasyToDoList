@@ -35,6 +35,24 @@ public sealed class TodoServiceTransactionTests
     }
 
     [Fact]
+    public async Task Update_persists_title_and_schedule()
+    {
+        await using var fixture = await TodoFixture.CreateAsync();
+        var todo = await fixture.Service.CreateAsync(
+            new CreateTodoCommand("Old", Today, Today),
+            CancellationToken.None);
+
+        await fixture.Service.UpdateAsync(
+            new UpdateTodoCommand(todo.Id, "  New  ", Today, Today.AddDays(2)),
+            CancellationToken.None);
+
+        fixture.Db.ChangeTracker.Clear();
+        var saved = await fixture.Db.TodoItems.SingleAsync();
+        Assert.Equal("New", saved.Title);
+        Assert.Equal(Today.AddDays(2), saved.Deadline);
+    }
+
+    [Fact]
     public async Task Complete_updates_todo_profile_and_ledger_once()
     {
         await using var fixture = await TodoFixture.CreateAsync();

@@ -29,7 +29,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M04 | Daily reconciliation, quá hạn và lịch sử | Hoàn thành | M03 |
 | M05 | Pomodoro state machine và persistence | Hoàn thành | M02, M03 |
 | M06 | WPF shell và medieval design foundation | Hoàn thành | M01, M05 |
-| M07 | Dashboard, To-do UI, lịch sử và Settings | Chưa bắt đầu | M04, M06 |
+| M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Chưa bắt đầu | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Chưa bắt đầu | M03, M07, M08 |
 | M10 | Windows lifecycle, tray, notification và startup | Chưa bắt đầu | M04, M05, M06 |
@@ -196,23 +196,23 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Today: Active + Overdue, create/edit/cancel/complete.
-- [ ] Form hiển thị validation cạnh field.
-- [ ] Calendar/history theo tuần và ngày.
-- [ ] Profile hiển thị EXP, coin, level và rank.
-- [ ] Reward ledger history.
-- [ ] Settings JSON versioned trong SQLite.
-- [ ] Settings cho âm lượng, animation, Reduced Motion, notification và auto-start.
-- [ ] Pomodoro custom validation giải thích lỗi cụ thể.
-- [ ] Empty/loading/error states tối thiểu.
+- [x] Today: Active + Overdue, create/edit/cancel/complete.
+- [x] Form hiển thị validation cạnh field.
+- [x] Calendar/history theo tuần và ngày.
+- [x] Profile hiển thị EXP, coin, level và rank.
+- [x] Reward ledger history.
+- [x] Settings JSON versioned trong SQLite.
+- [x] Settings cho âm lượng, animation, Reduced Motion, notification và auto-start.
+- [x] Pomodoro custom validation giải thích lỗi cụ thể.
+- [x] Empty/loading/error states tối thiểu.
 
 ### Hoàn thành khi
 
-- [ ] Luồng tạo → sửa → hủy/hoàn thành hoạt động từ UI tới SQLite.
-- [ ] App restart vẫn giữ dữ liệu và Settings.
-- [ ] Settings JSON lỗi dùng default mà không xóa dữ liệu người dùng.
-- [ ] ViewModel tests, `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add dashboard todo history and settings`.
+- [x] Luồng tạo → sửa → hủy/hoàn thành hoạt động từ UI tới SQLite.
+- [x] App restart vẫn giữ dữ liệu và Settings.
+- [x] Settings JSON lỗi dùng default mà không xóa dữ liệu người dùng.
+- [x] ViewModel tests, `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add dashboard todo history and settings`.
 
 ## M08 — Compact Overlay và Pomodoro UI
 

@@ -4,6 +4,8 @@ public interface ITodoService
 {
     Task<TodoItem> CreateAsync(CreateTodoCommand command, CancellationToken cancellationToken);
 
+    Task<TodoItem> UpdateAsync(UpdateTodoCommand command, CancellationToken cancellationToken);
+
     Task<TodoItem> UpdateScheduleAsync(
         UpdateTodoScheduleCommand command,
         CancellationToken cancellationToken);
