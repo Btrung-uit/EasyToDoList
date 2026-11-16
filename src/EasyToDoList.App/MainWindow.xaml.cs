@@ -92,9 +92,7 @@ public partial class MainWindow : Window
 
     private void OnOverlayTimerTick(object? sender, EventArgs e)
     {
-        if (_viewModel.DisplayMode == ShellDisplayMode.Overlay
-            && _viewModel.OverlayMode == OverlayMode.Pomodoro
-            && _viewModel.PomodoroOverlay?.RefreshCommand.CanExecute(null) == true)
+        if (_viewModel.PomodoroOverlay?.RefreshCommand.CanExecute(null) == true)
         {
             _viewModel.PomodoroOverlay.RefreshCommand.Execute(null);
         }

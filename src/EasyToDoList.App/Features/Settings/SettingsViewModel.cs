@@ -8,6 +8,7 @@ namespace EasyToDoList.App.Features.Settings;
 public sealed class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsStore _store;
+    private readonly Action<bool>? _registerStartup;
     private AppSettings _settings = AppSettings.Default;
     private string? _statusMessage;
 
@@ -25,9 +26,12 @@ public sealed class SettingsViewModel : ViewModelBase
     public string? StatusMessage { get => _statusMessage; private set => SetField(ref _statusMessage, value); }
     public double? OverlayLeft => _settings.OverlayLeft;
     public double? OverlayTop => _settings.OverlayTop;
-    public SettingsViewModel(ISettingsStore store)
+    public AppSettings Snapshot => _settings;
+
+    public SettingsViewModel(ISettingsStore store, Action<bool>? registerStartup = null)
     {
         _store = store;
+        _registerStartup = registerStartup;
         SaveCommand = new AsyncRelayCommand(SaveAsync);
     }
 
@@ -52,6 +56,12 @@ public sealed class SettingsViewModel : ViewModelBase
         try
         {
             await _store.SaveAsync(_settings, CancellationToken.None);
+            try { _registerStartup?.Invoke(_settings.AutoStartEnabled); }
+            catch (Exception)
+            {
+                StatusMessage = "Đã lưu cài đặt nhưng không thể cập nhật khởi động cùng Windows. Hãy thử lưu lại.";
+                return;
+            }
             StatusMessage = "Đã lưu cài đặt.";
         }
         catch (Exception)
@@ -72,7 +82,11 @@ public sealed class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(OverlayTop));
     }
 
-    public Task PersistAsync() => _store.SaveAsync(_settings, CancellationToken.None);
+    public async Task PersistAsync()
+    {
+        await _store.SaveAsync(_settings, CancellationToken.None);
+        _registerStartup?.Invoke(_settings.AutoStartEnabled);
+    }
 
     private void NotifyAll()
     {

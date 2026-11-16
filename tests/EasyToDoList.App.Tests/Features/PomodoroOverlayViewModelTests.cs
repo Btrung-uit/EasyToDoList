@@ -5,6 +5,16 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class PomodoroOverlayViewModelTests
 {
+    [Fact]
+    public async Task Lifecycle_owned_timer_prevents_overlay_from_awarding_offline_time()
+    {
+        var service = new PomodoroServiceStub(CreateSnapshot(PomodoroPhase.Focus, PomodoroStatus.Running, 0));
+        var viewModel = new PomodoroOverlayViewModel(service, () => PomodoroConfiguration.Standard, lifecycleOwnsTimer: true);
+        await viewModel.RefreshAsync();
+        Assert.Equal(0, service.TickCount);
+        Assert.Equal("00:00", viewModel.TimeText);
+    }
+
     [Theory]
     [InlineData(PomodoroPhase.Focus, "Tập trung")]
     [InlineData(PomodoroPhase.ShortBreak, "Nghỉ ngắn")]

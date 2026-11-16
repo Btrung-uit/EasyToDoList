@@ -32,9 +32,11 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
-| M10 | Windows lifecycle, tray, notification và startup | Chưa bắt đầu | M04, M05, M06 |
+| M10 | Windows lifecycle, tray, notification và startup | Đã triển khai; chờ kiểm thử Windows thủ công | M04, M05, M06 |
 | M11 | Accessibility, visual polish và asset integration | Chưa bắt đầu | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
+
+Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
 
 ---
 
@@ -267,23 +269,25 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] System tray menu: Overlay, Dashboard, Exit.
-- [ ] Single-instance; instance thứ hai focus instance hiện có rồi thoát.
-- [ ] Sleep/Exit pause Pomodoro trước khi shutdown.
-- [ ] Resume chạy reconciliation.
-- [ ] Notification cho Pomodoro end, due và Overdue.
-- [ ] Notification chỉ hoạt động khi process còn sống.
-- [ ] Auto-start setting.
-- [ ] Local rolling log không ghi nội dung To-do không cần thiết.
+- [x] System tray menu: Overlay, Dashboard, Exit.
+- [x] Single-instance; instance thứ hai focus instance hiện có rồi thoát.
+- [x] Sleep/Exit pause Pomodoro trước khi shutdown.
+- [x] Resume chạy reconciliation.
+- [x] Notification cho Pomodoro end, due và Overdue.
+- [x] Notification chỉ hoạt động khi process còn sống.
+- [x] Auto-start setting.
+- [x] Local rolling log không ghi nội dung To-do không cần thiết.
 
 ### Hoàn thành khi
 
-- [ ] Startup order: migration → recovery → reconciliation → UI.
-- [ ] Tray vẫn giữ timer/notification chạy.
+- [x] Startup order: migration → recovery → reconciliation → UI.
+- [x] Tray vẫn giữ timer/notification chạy.
 - [ ] Exit không để background process.
 - [ ] Manual test sleep/resume, tray và notification trên Windows 11 pass.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: integrate Windows lifecycle and notifications`.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: integrate Windows lifecycle and notifications`.
+
+Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không có warning/error. Kiểm thử tự động đã bao phủ SQLite thật, pause/resume, midnight, notification settings/deduplication, IPC single-instance, rolling log và WPF dispatcher/tray. Chưa đánh dấu hoàn thành M10: còn checklist [Windows thủ công](docs/testing/m10-windows-checklist.md). Smoke chạy app riêng đã dừng trước khi launch vì máy đang có một instance EasyToDoList khác; không đóng hoặc thay đổi instance đó. Forced Windows shutdown dùng crash recovery từ checkpoint tối đa khoảng 30 giây; explicit Exit lưu trạng thái trước khi đóng.
 
 ## M11 — Accessibility, visual polish và asset integration
 

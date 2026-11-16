@@ -15,6 +15,7 @@ using EasyToDoList.App.Features.Profile;
 using EasyToDoList.App.Features.Settings;
 using EasyToDoList.App.Features.Today;
 using EasyToDoList.App.Shell;
+using EasyToDoList.App.Windows;
 using EasyToDoList.Core.Common;
 using EasyToDoList.Core.Economy;
 using EasyToDoList.Core.Pomodoro;
@@ -87,6 +88,10 @@ public sealed class CompletionWpfTests
         settings.MasterVolume = 0;
         var shell = new ShellViewModel(pomodoro, dashboard, new PomodoroOverlayViewModel(pomodoro, pomodoroVm.TryBuildConfiguration));
         var window = new MainWindow(shell);
+        using var tray = new SystemTrayService(
+            () => shell.ShowOverlayCommand.Execute(null),
+            () => shell.ShowDashboardCommand.Execute(null),
+            () => shell.ExitCommand.Execute(null));
         try
         {
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);

@@ -9,6 +9,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
 {
     private readonly IPomodoroService _service;
     private readonly Func<PomodoroConfiguration?> _configurationProvider;
+    private readonly bool _lifecycleOwnsTimer;
     private string _phaseLabel = "Sẵn sàng";
     private string _statusLabel = "Chưa bắt đầu";
     private string _timeText = "--:--";
@@ -18,10 +19,12 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
 
     public PomodoroOverlayViewModel(
         IPomodoroService service,
-        Func<PomodoroConfiguration?> configurationProvider)
+        Func<PomodoroConfiguration?> configurationProvider,
+        bool lifecycleOwnsTimer = false)
     {
         _service = service;
         _configurationProvider = configurationProvider;
+        _lifecycleOwnsTimer = lifecycleOwnsTimer;
         StartCommand = new AsyncRelayCommand(StartAsync);
         PauseCommand = new AsyncRelayCommand(PauseAsync);
         ResumeCommand = new AsyncRelayCommand(ResumeAsync);
@@ -82,7 +85,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
         var snapshot = _service.Current;
         try
         {
-            if (snapshot is { Status: PomodoroStatus.Running, RemainingSeconds: <= 0 })
+            if (!_lifecycleOwnsTimer && snapshot is { Status: PomodoroStatus.Running, RemainingSeconds: <= 0 })
             {
                 await _service.TickAsync(CancellationToken.None);
                 snapshot = _service.Current;
