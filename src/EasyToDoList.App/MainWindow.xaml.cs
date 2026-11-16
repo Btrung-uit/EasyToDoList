@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using EasyToDoList.App.Shell;
+using EasyToDoList.App.Features.Today;
 
 namespace EasyToDoList.App;
 
@@ -11,6 +12,8 @@ public partial class MainWindow : Window
     private readonly ShellViewModel _viewModel;
     private readonly WindowModeController _modeController;
     private readonly DispatcherTimer _overlayTimer;
+    private readonly DispatcherTimer _feedbackTimer;
+    private readonly CompletionSound _completionSound = new();
     private bool _exitRequested;
 
     public MainWindow(ShellViewModel viewModel)
@@ -20,6 +23,9 @@ public partial class MainWindow : Window
         _modeController = new WindowModeController(this);
         _overlayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _overlayTimer.Tick += OnOverlayTimerTick;
+        _feedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) };
+        _feedbackTimer.Tick += OnFeedbackTimerTick;
+        if (viewModel.Dashboard is not null) viewModel.Dashboard.Today.CompletionCommitted += OnCompletionCommitted;
         DataContext = viewModel;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         viewModel.ExitRequested += OnExitRequested;
@@ -34,6 +40,18 @@ public partial class MainWindow : Window
             viewModel.Dashboard?.Settings.OverlayLeft,
             viewModel.Dashboard?.Settings.OverlayTop);
         _overlayTimer.Start();
+        _feedbackTimer.Start();
+    }
+
+    private void OnFeedbackTimerTick(object? sender, EventArgs e) => _viewModel.Dashboard?.Today.RefreshFeedback();
+
+    private void OnCompletionCommitted(object? sender, EventArgs e)
+    {
+        if (_viewModel.Dashboard is { } dashboard
+            && (dashboard.Today.ComboCount >= 2
+                ? dashboard.Settings.ComboSoundEnabled
+                : dashboard.Settings.CompletionSoundEnabled))
+            _completionSound.Play(dashboard.Today.ComboCount, dashboard.Settings.MasterVolume);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -106,6 +124,10 @@ public partial class MainWindow : Window
     private void OnClosed(object? sender, EventArgs e)
     {
         _overlayTimer.Stop();
+        _feedbackTimer.Stop();
+        _feedbackTimer.Tick -= OnFeedbackTimerTick;
+        if (_viewModel.Dashboard is not null) _viewModel.Dashboard.Today.CompletionCommitted -= OnCompletionCommitted;
+        _completionSound.Dispose();
         _overlayTimer.Tick -= OnOverlayTimerTick;
         LocationChanged -= OnLocationChanged;
         Closed -= OnClosed;

@@ -6,4 +6,7 @@ public sealed record TodoCompletionResult(
     TodoItem Todo,
     RewardAmount Reward,
     Guid TransactionId,
-    DateTimeOffset UndoUntilUtc);
+    DateTimeOffset UndoUntilUtc)
+{
+    public int EarlyBonusExperience { get; init; }
+}

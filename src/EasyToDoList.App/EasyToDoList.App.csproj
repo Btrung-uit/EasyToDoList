@@ -6,6 +6,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="..\..\assets\pixel-art\mvp\mascots\knight\frames\celebrate\*.png">
+      <Link>Assets\Celebrate\%(Filename)%(Extension)</Link>
+    </Resource>
     <Resource Include="..\..\assets\pixel-art\mvp\backgrounds\guild-valley.png">
       <Link>Assets\Backgrounds\guild-valley.png</Link>
     </Resource>

@@ -216,5 +216,10 @@ public sealed class TodoService(
             todo,
             new RewardAmount(transaction.ExperienceDelta, transaction.CoinDelta),
             transaction.Id,
-            transaction.CreatedAtUtc + UndoWindow);
+            transaction.CreatedAtUtc + UndoWindow)
+        {
+            EarlyBonusExperience = transaction.Reason == RewardReason.Completion
+                ? Math.Max(0, transaction.ExperienceDelta - (todo.BaseExperience ?? 0))
+                : 0,
+        };
 }

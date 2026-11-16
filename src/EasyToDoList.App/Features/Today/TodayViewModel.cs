@@ -12,6 +12,13 @@ public sealed class TodayViewModel : ViewModelBase
     private readonly ITodoService _service;
     private readonly IClock _clock;
     private readonly Func<Task>? _afterMutation;
+    private readonly Func<bool> _motionEnabled;
+    private readonly HashSet<Guid> _pending = [];
+    private readonly SemaphoreSlim _databaseGate = new(1, 1);
+    private DateTimeOffset _comboUntil;
+    private int _comboGeneration;
+    private int _comboCount;
+    private double _comboProgress;
     private Guid? _editingId;
     private string _title = string.Empty;
     private DateTime? _startDate;
@@ -21,21 +28,34 @@ public sealed class TodayViewModel : ViewModelBase
     private string? _errorMessage;
     private bool _isLoading;
 
-    public TodayViewModel(ITodoService service, IClock clock, Func<Task>? afterMutation = null)
+    public TodayViewModel(ITodoService service, IClock clock, Func<Task>? afterMutation = null, Func<bool>? motionEnabled = null)
     {
         _service = service;
         _clock = clock;
         _afterMutation = afterMutation;
+        _motionEnabled = motionEnabled ?? (() => true);
         StartDate = clock.LocalToday.ToDateTime(TimeOnly.MinValue);
         Deadline = StartDate;
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         EditCommand = new RelayCommand(BeginEdit);
-        CompleteCommand = new AsyncRelayCommand<TodoItem>(CompleteAsync);
-        CancelCommand = new AsyncRelayCommand<TodoItem>(CancelAsync);
+        CompleteCommand = new AsyncRelayCommand<TodoRowViewModel>(CompleteAsync);
+        CancelCommand = new AsyncRelayCommand<TodoRowViewModel>(CancelAsync);
+        UndoCommand = new AsyncRelayCommand<CompletionFeedback>(UndoAsync);
     }
 
-    public ObservableCollection<TodoItem> Items { get; } = [];
+    public ObservableCollection<TodoRowViewModel> Items { get; } = [];
+    public ObservableCollection<CompletionFeedback> Feedback { get; } = [];
+    public event EventHandler? CompletionCommitted;
+    public int ComboCount { get => _comboCount; private set => SetField(ref _comboCount, value); }
+    public double ComboProgress { get => _comboProgress; private set => SetField(ref _comboProgress, value); }
+    public bool HasCombo => ComboCount > 0;
+    public bool IsComboActive => ComboCount >= 2;
+    public string ComboLabel => IsComboActive ? $"Combo ×{ComboCount} — Tuyệt lắm!" : "Hoàn thành!";
+    public bool HasFeedback => Feedback.Count > 0;
+    public bool MotionEnabled => _motionEnabled();
+    public string MascotFrame => $"/EasyToDoList.App;component/Assets/Celebrate/celebrate-{(MotionEnabled && HasCombo ? (int)Math.Max(0, (2 - (_comboUntil - _clock.UtcNow).TotalSeconds) * 8) % 6 : 0):00}.png";
+    public ICommand UndoCommand { get; }
     public string Title { get => _title; set => SetField(ref _title, value); }
     public DateTime? StartDate { get => _startDate; set => SetField(ref _startDate, value); }
     public DateTime? Deadline { get => _deadline; set => SetField(ref _deadline, value); }
@@ -57,11 +77,14 @@ public sealed class TodayViewModel : ViewModelBase
         ErrorMessage = null;
         try
         {
-            var items = await _service.GetTodayAsync(_clock.LocalToday, CancellationToken.None);
-            Items.Clear();
+            var items = await ReadAsync(() => _service.GetTodayAsync(_clock.LocalToday, CancellationToken.None));
+            var ids = items.Select(x => x.Id).ToHashSet();
+            foreach (var old in Items.Where(x => !ids.Contains(x.Id) && !x.IsCompleting).ToArray()) Items.Remove(old);
             foreach (var item in items)
             {
-                Items.Add(item);
+                var row = Items.FirstOrDefault(x => x.Id == item.Id);
+                if (row is null) Items.Add(new TodoRowViewModel(item));
+                else row.Update(item);
             }
             OnPropertyChanged(nameof(IsEmpty));
         }
@@ -90,11 +113,11 @@ public sealed class TodayViewModel : ViewModelBase
             var deadline = DateOnly.FromDateTime(Deadline!.Value);
             if (_editingId is Guid id)
             {
-                await _service.UpdateAsync(new UpdateTodoCommand(id, Title, start, deadline), CancellationToken.None);
+                await ReadAsync(() => _service.UpdateAsync(new UpdateTodoCommand(id, Title, start, deadline), CancellationToken.None));
             }
             else
             {
-                await _service.CreateAsync(new CreateTodoCommand(Title, start, deadline), CancellationToken.None);
+                await ReadAsync(() => _service.CreateAsync(new CreateTodoCommand(Title, start, deadline), CancellationToken.None));
             }
             ResetForm();
             await LoadAsync();
@@ -107,10 +130,11 @@ public sealed class TodayViewModel : ViewModelBase
 
     private void BeginEdit(object? value)
     {
-        if (value is not TodoItem item)
+        if (value is not TodoRowViewModel row || row.IsCompleting || _pending.Contains(row.Id))
         {
             return;
         }
+        var item = row.Item;
         _editingId = item.Id;
         Title = item.Title;
         StartDate = item.StartDate.ToDateTime(TimeOnly.MinValue);
@@ -118,26 +142,130 @@ public sealed class TodayViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsEditing));
     }
 
-    private async Task CompleteAsync(TodoItem item) => await MutateAsync(() => _service.CompleteAsync(item.Id, CancellationToken.None));
+    public async Task CompleteAsync(TodoRowViewModel row)
+    {
+        if (row.IsCompleting || !Items.Contains(row) || !_pending.Add(row.Id)) return;
+        ErrorMessage = null;
+        try
+        {
+            TodoCompletionResult result;
+            try { result = await ReadAsync(() => _service.CompleteAsync(row.Id, CancellationToken.None)); }
+            catch (Exception) { ErrorMessage = "Không thể hoàn thành nhiệm vụ. Hãy thử lại."; return; }
+            RefreshFeedback();
+            if (ComboCount == 0) _comboGeneration++;
+            ComboCount++;
+            _comboUntil = _clock.UtcNow.AddSeconds(2);
+            ComboProgress = 1;
+            Feedback.Add(new CompletionFeedback(result, Items.IndexOf(row), _comboGeneration));
+            row.AnimationStartedUtc = _clock.UtcNow;
+            row.CompletionProgress = 0;
+            if (!MotionEnabled) Items.Remove(row);
+            NotifyFeedback();
+            // Presentation failures cannot undo a committed completion or hide its Undo token.
+            try { CompletionCommitted?.Invoke(this, EventArgs.Empty); } catch (Exception) { }
+            await RefreshProfileAsync();
+        }
+        finally { _pending.Remove(row.Id); }
+    }
 
-    private async Task CancelAsync(TodoItem item) => await MutateAsync(() => _service.CancelAsync(item.Id, CancellationToken.None));
+    public async Task UndoAsync(CompletionFeedback feedback)
+    {
+        var result = feedback.Result;
+        if (!Feedback.Contains(feedback) || _clock.UtcNow > result.UndoUntilUtc || !_pending.Add(result.Todo.Id)) return;
+        ErrorMessage = null;
+        try
+        {
+            try { await WriteAsync(() => _service.UndoCompletionAsync(result.Todo.Id, result.TransactionId, CancellationToken.None)); }
+            catch (Exception) { ErrorMessage = "Không thể hoàn tác. Hãy thử lại trong 5 giây."; return; }
+            Feedback.Remove(feedback);
+            var row = Items.FirstOrDefault(x => x.Id == result.Todo.Id);
+            if (row is null)
+            {
+                row = new TodoRowViewModel(result.Todo);
+                Items.Insert(Math.Min(feedback.OriginalIndex, Items.Count), row);
+            }
+            row.AnimationStartedUtc = null;
+            row.CompletionProgress = 0;
+            RefreshFeedback();
+            if (feedback.ComboGeneration == _comboGeneration && ComboCount > 0) ComboCount--;
+            if (ComboCount == 0) ComboProgress = 0;
+            NotifyFeedback();
+            await LoadAsync();
+            await RefreshProfileAsync();
+        }
+        finally { _pending.Remove(result.Todo.Id); }
+    }
+
+    public void RefreshFeedback()
+    {
+        if (ComboCount == 0 && Feedback.Count == 0 && !Items.Any(x => x.IsCompleting)) return;
+        var now = _clock.UtcNow;
+        if (now >= _comboUntil) { ComboCount = 0; ComboProgress = 0; }
+        else ComboProgress = Math.Clamp((_comboUntil - now).TotalSeconds / 2, 0, 1);
+        foreach (var row in Items.Where(x => x.IsCompleting).ToArray())
+        {
+            row.CompletionProgress = Math.Clamp((now - row.AnimationStartedUtc!.Value).TotalMilliseconds / 800, 0, 1);
+            if (row.CompletionProgress >= 1 || !MotionEnabled) Items.Remove(row);
+        }
+        foreach (var entry in Feedback.Where(x => now > x.Result.UndoUntilUtc).ToArray()) Feedback.Remove(entry);
+        NotifyFeedback();
+    }
+
+    private void NotifyFeedback()
+    {
+        OnPropertyChanged(nameof(HasCombo));
+        OnPropertyChanged(nameof(IsComboActive));
+        OnPropertyChanged(nameof(ComboLabel));
+        OnPropertyChanged(nameof(HasFeedback));
+        OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(MascotFrame));
+    }
+
+    private async Task RefreshProfileAsync()
+    {
+        if (_afterMutation is null) return;
+        try { await WriteAsync(_afterMutation); }
+        catch (Exception) { ErrorMessage = "Đã lưu nhiệm vụ; chưa tải lại được hồ sơ."; }
+    }
+
+    private async Task CancelAsync(TodoRowViewModel row)
+    {
+        if (row.IsCompleting || !_pending.Add(row.Id)) return;
+        try { await MutateAsync(() => _service.CancelAsync(row.Id, CancellationToken.None)); }
+        finally { _pending.Remove(row.Id); }
+    }
 
     private async Task MutateAsync(Func<Task> mutation)
     {
         ErrorMessage = null;
         try
         {
-            await mutation();
+            await WriteAsync(mutation);
             await LoadAsync();
             if (_afterMutation is not null)
             {
-                await _afterMutation();
+                await WriteAsync(_afterMutation);
             }
         }
         catch (Exception)
         {
             ErrorMessage = "Không thể cập nhật nhiệm vụ. Hãy thử lại.";
         }
+    }
+
+    // Accept clicks immediately while serializing access to the shared EF context.
+    private async Task<T> ReadAsync<T>(Func<Task<T>> operation)
+    {
+        await _databaseGate.WaitAsync();
+        try { return await operation(); }
+        finally { _databaseGate.Release(); }
+    }
+
+    private async Task WriteAsync(Func<Task> operation)
+    {
+        await _databaseGate.WaitAsync();
+        try { await operation(); }
+        finally { _databaseGate.Release(); }
     }
 
     private bool ValidateForm()

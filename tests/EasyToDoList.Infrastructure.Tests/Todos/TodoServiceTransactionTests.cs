@@ -69,6 +69,8 @@ public sealed class TodoServiceTransactionTests
         var transaction = await fixture.Db.RewardTransactions.SingleAsync();
         Assert.Equal(TodoStatus.Completed, savedTodo.Status);
         Assert.Equal(38, profile.TotalExperience);
+        Assert.Equal(13, first.EarlyBonusExperience);
+        Assert.Equal(first.EarlyBonusExperience, retry.EarlyBonusExperience);
         Assert.Equal(6, profile.CoinBalance);
         Assert.Equal(38, transaction.ExperienceDelta);
         Assert.Equal(6, transaction.CoinDelta);

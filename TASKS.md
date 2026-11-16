@@ -31,7 +31,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M06 | WPF shell và medieval design foundation | Hoàn thành | M01, M05 |
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
-| M09 | Animation hoàn thành, combo, Undo và reward feedback | Chưa bắt đầu | M03, M07, M08 |
+| M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
 | M10 | Windows lifecycle, tray, notification và startup | Chưa bắt đầu | M04, M05, M06 |
 | M11 | Accessibility, visual polish và asset integration | Chưa bắt đầu | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
@@ -242,24 +242,24 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Animation crack → glow → pixel burst → collapse trong 700–900 ms.
-- [ ] Danh sách chỉ dồn lên sau animation của item tương ứng.
-- [ ] Combo window 2 giây và circular countdown.
-- [ ] Âm combo tăng bậc nhưng không nhân EXP/coin.
-- [ ] Reward toast hiển thị EXP, early bonus và coin từ service result.
-- [ ] Undo 5 giây gọi reversal transaction.
-- [ ] Tích hợp mascot Celebrate sau completion.
-- [ ] Animation/audio chỉ chạy sau database commit.
-- [ ] Service failure không phát animation hoặc phần thưởng giả.
+- [x] Animation crack → glow → pixel burst → collapse trong 700–900 ms.
+- [x] Danh sách chỉ dồn lên sau animation của item tương ứng.
+- [x] Combo window 2 giây và circular countdown.
+- [x] Âm combo tăng bậc nhưng không nhân EXP/coin.
+- [x] Reward toast hiển thị EXP, early bonus và coin từ service result.
+- [x] Undo 5 giây gọi reversal transaction.
+- [x] Tích hợp mascot Celebrate sau completion.
+- [x] Animation/audio chỉ chạy sau database commit.
+- [x] Service failure không phát animation hoặc phần thưởng giả.
 
 ### Hoàn thành khi
 
-- [ ] Tick nhiều To-do liên tiếp không khóa input.
-- [ ] Combo reset/expire đúng bằng fake clock.
-- [ ] Undo khôi phục item và đảo reward đúng một lần.
-- [ ] Reduced Motion dùng feedback thay thế, không mất thông tin.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add completion combo and undo feedback`.
+- [x] Tick nhiều To-do liên tiếp không khóa input.
+- [x] Combo reset/expire đúng bằng fake clock.
+- [x] Undo khôi phục item và đảo reward đúng một lần.
+- [x] Reduced Motion dùng feedback thay thế, không mất thông tin.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add completion combo and undo feedback`.
 
 ## M10 — Windows lifecycle, tray, notification và startup
 

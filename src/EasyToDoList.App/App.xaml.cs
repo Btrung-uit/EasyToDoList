@@ -85,18 +85,20 @@ public partial class App : Application
         var profile = new ProfileViewModel(
             new SqliteProfileQuery(_dbContext),
             new SqliteRewardHistoryQuery(_dbContext));
+        var settings = new SettingsViewModel(new SqliteSettingsStore(_dbContext));
         var today = new TodayViewModel(
             new EasyToDoList.Core.Todos.TodoService(
                 todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
             clock,
-            profile.LoadAsync);
+            profile.LoadAsync,
+            () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
         var dashboardPomodoro = new DashboardPomodoroViewModel();
         var dashboard = new DashboardViewModel(
             today,
             new CalendarViewModel(new SqliteTodoHistoryQuery(_dbContext), clock),
             dashboardPomodoro,
             profile,
-            new SettingsViewModel(new SqliteSettingsStore(_dbContext)));
+            settings);
         await dashboard.InitializeAsync();
         var pomodoroOverlay = new PomodoroOverlayViewModel(
             pomodoroService,

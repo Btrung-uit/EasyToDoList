@@ -46,11 +46,11 @@ internal sealed class AsyncRelayCommand(Func<Task> execute) : ICommand
 
 internal sealed class AsyncRelayCommand<T>(Func<T, Task> execute) : ICommand
 {
-    private bool _isExecuting;
+    private readonly HashSet<T> _executing = [];
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter) => !_isExecuting && parameter is T;
+    public bool CanExecute(object? parameter) => parameter is T value && !_executing.Contains(value);
 
     public async void Execute(object? parameter)
     {
@@ -59,15 +59,16 @@ internal sealed class AsyncRelayCommand<T>(Func<T, Task> execute) : ICommand
             return;
         }
 
-        _isExecuting = true;
+        var value = (T)parameter!;
+        _executing.Add(value);
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         try
         {
-            await execute((T)parameter!);
+            await execute(value);
         }
         finally
         {
-            _isExecuting = false;
+            _executing.Remove(value);
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
