@@ -23,6 +23,8 @@ public sealed class SettingsViewModel : ViewModelBase
     public bool TickSoundEnabled { get => _settings.TickSoundEnabled; set { _settings = _settings with { TickSoundEnabled = value }; OnPropertyChanged(); } }
     public bool BellSoundEnabled { get => _settings.BellSoundEnabled; set { _settings = _settings with { BellSoundEnabled = value }; OnPropertyChanged(); } }
     public string? StatusMessage { get => _statusMessage; private set => SetField(ref _statusMessage, value); }
+    public double? OverlayLeft => _settings.OverlayLeft;
+    public double? OverlayTop => _settings.OverlayTop;
     public SettingsViewModel(ISettingsStore store)
     {
         _store = store;
@@ -57,6 +59,20 @@ public sealed class SettingsViewModel : ViewModelBase
             StatusMessage = "Không thể lưu cài đặt. Hãy thử lại.";
         }
     }
+
+    public void UpdateOverlayPosition(double left, double top)
+    {
+        if (!double.IsFinite(left) || !double.IsFinite(top))
+        {
+            return;
+        }
+
+        _settings = _settings with { OverlayLeft = left, OverlayTop = top };
+        OnPropertyChanged(nameof(OverlayLeft));
+        OnPropertyChanged(nameof(OverlayTop));
+    }
+
+    public Task PersistAsync() => _store.SaveAsync(_settings, CancellationToken.None);
 
     private void NotifyAll()
     {

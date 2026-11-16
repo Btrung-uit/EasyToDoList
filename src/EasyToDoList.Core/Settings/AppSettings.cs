@@ -28,11 +28,21 @@ public sealed record AppSettings
 
     public bool AutoStartEnabled { get; init; }
 
+    public double? OverlayLeft { get; init; }
+
+    public double? OverlayTop { get; init; }
+
     public void Validate()
     {
         if (MasterVolume is < 0 or > 100)
         {
             throw new ArgumentOutOfRangeException(nameof(MasterVolume));
+        }
+
+        if (OverlayLeft is double left && !double.IsFinite(left)
+            || OverlayTop is double top && !double.IsFinite(top))
+        {
+            throw new ArgumentOutOfRangeException(nameof(OverlayLeft));
         }
     }
 }

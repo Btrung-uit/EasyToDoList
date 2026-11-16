@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using EasyToDoList.Core.Pomodoro;
 using EasyToDoList.App.Features.Dashboard;
+using EasyToDoList.App.Features.Overlay;
 
 namespace EasyToDoList.App.Shell;
 
@@ -13,10 +14,14 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     private OverlayMode _overlayMode = OverlayMode.Todo;
     private string? _exitErrorMessage;
 
-    public ShellViewModel(IPomodoroService pomodoroService, DashboardViewModel? dashboard = null)
+    public ShellViewModel(
+        IPomodoroService pomodoroService,
+        DashboardViewModel? dashboard = null,
+        PomodoroOverlayViewModel? pomodoroOverlay = null)
     {
         _pomodoroService = pomodoroService;
         Dashboard = dashboard;
+        PomodoroOverlay = pomodoroOverlay;
         ShowDashboardCommand = new RelayCommand(_ => DisplayMode = ShellDisplayMode.Dashboard);
         ShowOverlayCommand = new RelayCommand(ShowOverlay);
         HideToTrayCommand = new RelayCommand(_ => HideToTray());
@@ -28,6 +33,8 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     public event EventHandler? ExitRequested;
 
     public DashboardViewModel? Dashboard { get; }
+
+    public PomodoroOverlayViewModel? PomodoroOverlay { get; }
 
     public ShellDisplayMode DisplayMode
     {
@@ -57,6 +64,9 @@ public sealed class ShellViewModel : INotifyPropertyChanged
 
     public void HideToTray() => DisplayMode = ShellDisplayMode.HiddenToTray;
 
+    public void UpdateOverlayPosition(double left, double top) =>
+        Dashboard?.Settings.UpdateOverlayPosition(left, top);
+
     public async Task ExitAsync()
     {
         ExitErrorMessage = null;
@@ -69,6 +79,19 @@ public sealed class ShellViewModel : INotifyPropertyChanged
             catch (Exception)
             {
                 ExitErrorMessage = "Không thể lưu trạng thái Pomodoro. Hãy thử thoát lại.";
+                return;
+            }
+        }
+
+        if (Dashboard is not null)
+        {
+            try
+            {
+                await Dashboard.Settings.PersistAsync();
+            }
+            catch (Exception)
+            {
+                ExitErrorMessage = "Không thể lưu vị trí Overlay. Hãy thử thoát lại.";
                 return;
             }
         }

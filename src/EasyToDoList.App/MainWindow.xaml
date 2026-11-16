@@ -109,7 +109,8 @@
         <Border Margin="14" Padding="14"
                 Background="{StaticResource GuildWoodBrush}"
                 BorderBrush="{StaticResource GuildGoldBrush}"
-                BorderThickness="3" CornerRadius="5">
+                BorderThickness="3" CornerRadius="5"
+                MouseLeftButtonDown="OnOverlayMouseLeftButtonDown">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -144,9 +145,9 @@
 
                 <Border Grid.Row="2" Style="{StaticResource GuildPanelStyle}">
                     <Grid>
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding OverlayMode}" Value="{x:Static shell:OverlayMode.Todo}">
@@ -154,13 +155,38 @@
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </StackPanel.Style>
-                            <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hiện tại" />
-                            <TextBlock Margin="0,12,0,0" TextAlignment="Center"
+                            </Grid.Style>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hiện tại" />
+                            <ListBox Grid.Row="2" ItemsSource="{Binding Dashboard.Today.Items}"
+                                     Background="Transparent" BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding Title}" TextWrapping="Wrap" />
+                                            <Button Grid.Column="1" Margin="8,0,0,0"
+                                                    Command="{Binding DataContext.Dashboard.Today.CompleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" Content="Xong"
+                                                    Style="{StaticResource GuildButtonStyle}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Style="{StaticResource GuildBodyTextStyle}"
-                                       Text="Danh sách gọn sẽ xuất hiện tại đây." />
-                        </StackPanel>
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                       Text="Không còn nhiệm vụ nào cho hôm nay."
+                                       Visibility="{Binding Dashboard.Today.IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
+                        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center">
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -171,13 +197,35 @@
                                     </Style.Triggers>
                                 </Style>
                             </StackPanel.Style>
-                            <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}" Text="Sẵn sàng tập trung" />
+                            <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}"
+                                       Text="{Binding PomodoroOverlay.PhaseLabel}" />
                             <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center"
                                        FontSize="38" FontWeight="Bold"
-                                       Foreground="{StaticResource GuildInkBrush}" Text="25:00" />
-                            <TextBlock Margin="0,10,0,0" TextAlignment="Center"
+                                       Foreground="{StaticResource GuildInkBrush}"
+                                       Text="{Binding PomodoroOverlay.TimeText}" />
+                            <TextBlock Margin="0,6,0,14" HorizontalAlignment="Center"
                                        Style="{StaticResource GuildBodyTextStyle}"
-                                       Text="Điều khiển phiên tập trung sẽ được nối ở bước tiếp theo." />
+                                       Text="{Binding PomodoroOverlay.StatusLabel}" />
+                            <WrapPanel HorizontalAlignment="Center">
+                                <Button Margin="4" Command="{Binding PomodoroOverlay.StartCommand}"
+                                        IsEnabled="{Binding PomodoroOverlay.CanStart}"
+                                        Content="Bắt đầu" Style="{StaticResource GuildButtonStyle}" />
+                                <Button Margin="4" Command="{Binding PomodoroOverlay.PauseCommand}"
+                                        IsEnabled="{Binding PomodoroOverlay.IsRunning}"
+                                        Content="Tạm dừng" Style="{StaticResource GuildButtonStyle}" />
+                                <Button Margin="4" Command="{Binding PomodoroOverlay.ResumeCommand}"
+                                        IsEnabled="{Binding PomodoroOverlay.IsPaused}"
+                                        Content="Tiếp tục" Style="{StaticResource GuildButtonStyle}" />
+                                <Button Margin="4" Command="{Binding PomodoroOverlay.SkipCommand}"
+                                        IsEnabled="{Binding PomodoroOverlay.HasSession}"
+                                        Content="Bỏ qua" Style="{StaticResource GuildWoodButtonStyle}" />
+                                <Button Margin="4" Command="{Binding PomodoroOverlay.StopCommand}"
+                                        IsEnabled="{Binding PomodoroOverlay.HasSession}"
+                                        Content="Dừng" Style="{StaticResource GuildDangerButtonStyle}" />
+                            </WrapPanel>
+                            <TextBlock Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap"
+                                       Foreground="{StaticResource GuildDangerBrush}"
+                                       Text="{Binding PomodoroOverlay.ErrorMessage}" />
                         </StackPanel>
                     </Grid>
                 </Border>

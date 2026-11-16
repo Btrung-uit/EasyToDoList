@@ -57,6 +57,20 @@ public sealed class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task Overlay_position_is_preserved_when_settings_are_persisted()
+    {
+        var store = new SettingsStoreStub(AppSettings.Default);
+        var viewModel = new SettingsViewModel(store);
+        await viewModel.LoadAsync();
+
+        viewModel.UpdateOverlayPosition(720, 180);
+        await viewModel.PersistAsync();
+
+        Assert.Equal(720, store.Value.OverlayLeft);
+        Assert.Equal(180, store.Value.OverlayTop);
+    }
+
+    [Fact]
     public void Calendar_starts_on_monday_of_current_week()
     {
         var viewModel = new CalendarViewModel(new HistoryQueryStub(), new ClockStub());

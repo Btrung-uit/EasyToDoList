@@ -17,6 +17,8 @@ public sealed class SqliteSettingsStoreTests
             MasterVolume = 35,
             ReducedMotionEnabled = true,
             AutoStartEnabled = true,
+            OverlayLeft = 720,
+            OverlayTop = 180,
         };
 
         await store.SaveAsync(settings, CancellationToken.None);
@@ -26,6 +28,8 @@ public sealed class SqliteSettingsStoreTests
         Assert.Equal(40, loaded.MasterVolume);
         Assert.True(loaded.ReducedMotionEnabled);
         Assert.True(loaded.AutoStartEnabled);
+        Assert.Equal(720, loaded.OverlayLeft);
+        Assert.Equal(180, loaded.OverlayTop);
         Assert.Equal(1, await fixture.Db.AppSettings.CountAsync());
     }
 

@@ -4,7 +4,7 @@ namespace EasyToDoList.App.Shell;
 
 public sealed class WindowModeController(Window window)
 {
-    public void Apply(ShellDisplayMode mode)
+    public void Apply(ShellDisplayMode mode, double? overlayLeft = null, double? overlayTop = null)
     {
         if (mode == ShellDisplayMode.HiddenToTray)
         {
@@ -14,7 +14,7 @@ public sealed class WindowModeController(Window window)
 
         var isOverlay = mode == ShellDisplayMode.Overlay;
         var workArea = SystemParameters.WorkArea;
-        var width = isOverlay ? 380 : Math.Min(1180, Math.Max(640, workArea.Width - 32));
+        var width = isOverlay ? Math.Min(380, workArea.Width) : Math.Min(1180, Math.Max(640, workArea.Width - 32));
         var height = isOverlay ? Math.Min(540, workArea.Height - 32) : Math.Min(760, Math.Max(480, workArea.Height - 32));
         window.Topmost = isOverlay;
         window.ResizeMode = isOverlay ? ResizeMode.NoResize : ResizeMode.CanResizeWithGrip;
@@ -23,6 +23,18 @@ public sealed class WindowModeController(Window window)
         window.Width = width;
         window.Height = height;
         window.Title = isOverlay ? "EasyToDoList — Overlay" : "EasyToDoList — Hội quán nhiệm vụ";
+
+        if (isOverlay)
+        {
+            window.Left = Math.Clamp(
+                overlayLeft ?? workArea.Right - width - 16,
+                workArea.Left,
+                workArea.Right - width);
+            window.Top = Math.Clamp(
+                overlayTop ?? workArea.Top + 16,
+                workArea.Top,
+                workArea.Bottom - height);
+        }
 
         if (!window.IsVisible)
         {

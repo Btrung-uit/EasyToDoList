@@ -5,6 +5,7 @@ using EasyToDoList.App.Features.Dashboard;
 using EasyToDoList.App.Features.Profile;
 using EasyToDoList.App.Features.Settings;
 using EasyToDoList.App.Features.Today;
+using EasyToDoList.App.Features.Overlay;
 using DashboardPomodoroViewModel = EasyToDoList.App.Features.Pomodoro.PomodoroViewModel;
 using EasyToDoList.Core.Economy;
 using EasyToDoList.Core.Pomodoro;
@@ -67,6 +68,20 @@ public partial class App : Application
         var pomodoroService = new PomodoroService(
             new SqlitePomodoroStore(_dbContext),
             rewardStore, profileStore, unitOfWork, economy, clock);
+        try
+        {
+            await pomodoroService.RecoverAsync(CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(
+                $"Không thể khôi phục Pomodoro.\n\n{exception.Message}",
+                "EasyToDoList - Lỗi dữ liệu",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
         var profile = new ProfileViewModel(
             new SqliteProfileQuery(_dbContext),
             new SqliteRewardHistoryQuery(_dbContext));
@@ -75,14 +90,18 @@ public partial class App : Application
                 todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
             clock,
             profile.LoadAsync);
+        var dashboardPomodoro = new DashboardPomodoroViewModel();
         var dashboard = new DashboardViewModel(
             today,
             new CalendarViewModel(new SqliteTodoHistoryQuery(_dbContext), clock),
-            new DashboardPomodoroViewModel(),
+            dashboardPomodoro,
             profile,
             new SettingsViewModel(new SqliteSettingsStore(_dbContext)));
         await dashboard.InitializeAsync();
-        var window = new MainWindow(new ShellViewModel(pomodoroService, dashboard));
+        var pomodoroOverlay = new PomodoroOverlayViewModel(
+            pomodoroService,
+            dashboardPomodoro.TryBuildConfiguration);
+        var window = new MainWindow(new ShellViewModel(pomodoroService, dashboard, pomodoroOverlay));
         MainWindow = window;
         window.Show();
     }
