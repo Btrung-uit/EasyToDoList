@@ -282,12 +282,14 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 - [x] Startup order: migration → recovery → reconciliation → UI.
 - [x] Tray vẫn giữ timer/notification chạy.
-- [ ] Exit không để background process.
+- [x] Exit không để background process.
 - [ ] Manual test sleep/resume, tray và notification trên Windows 11 pass.
 - [x] `dotnet build -warnaserror` và `dotnet test` pass.
 - [x] Commit: `feat: integrate Windows lifecycle and notifications`.
 
 Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không có warning/error. Kiểm thử tự động đã bao phủ SQLite thật, pause/resume, midnight, notification settings/deduplication, IPC single-instance, rolling log và WPF dispatcher/tray. Chưa đánh dấu hoàn thành M10: còn checklist [Windows thủ công](docs/testing/m10-windows-checklist.md). Smoke chạy app riêng đã dừng trước khi launch vì máy đang có một instance EasyToDoList khác; không đóng hoặc thay đổi instance đó. Forced Windows shutdown dùng crash recovery từ checkpoint tối đa khoảng 30 giây; explicit Exit lưu trạng thái trước khi đóng.
+
+Đối chiếu 17/11/2026: 14/14 kiểm tra executable Release thật pass trên Windows 11, gồm tray/double-click, single-instance hidden/minimized và foreground, auto-start qua Save/Exit, `--tray`, Exit khi Focus đang chạy và mở lại Paused giữ nguyên thời gian. Full suite 211/211 tests pass; build warnings-as-errors 0 warning/error. Không còn process sau smoke; record kiểm thử đã dọn riêng và auto-start đã khôi phục. Sleep/Resume và đăng xuất/đăng nhập được người dùng chọn kiểm thử sau. Thông báo đến hạn đã xác nhận bằng ảnh chụp banner Windows thật (UI Automation ban đầu bỏ sót). Chưa xác nhận chạy hết Focus trong tray hoặc qua midnight thật, nên M10 vẫn chưa đóng. Xem checklist để phân biệt proof thật và clock giả.
 
 ## M11 — Accessibility, visual polish và asset integration
 
