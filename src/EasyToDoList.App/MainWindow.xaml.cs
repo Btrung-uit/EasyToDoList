@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using EasyToDoList.App.Shell;
 using EasyToDoList.App.Features.Today;
+using EasyToDoList.Core.Pomodoro;
 
 namespace EasyToDoList.App;
 
@@ -14,12 +15,15 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _overlayTimer;
     private readonly DispatcherTimer _feedbackTimer;
     private readonly CompletionSound _completionSound = new();
+    private readonly CompletionSound _pomodoroSound = new();
+    private PomodoroSnapshot? _lastAudioSnapshot;
     private bool _exitRequested;
 
     public MainWindow(ShellViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _lastAudioSnapshot = viewModel.PomodoroOverlay?.Snapshot;
         _modeController = new WindowModeController(this);
         _overlayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _overlayTimer.Tick += OnOverlayTimerTick;
@@ -27,6 +31,9 @@ public partial class MainWindow : Window
         _feedbackTimer.Tick += OnFeedbackTimerTick;
         if (viewModel.Dashboard is not null) viewModel.Dashboard.Today.CompletionCommitted += OnCompletionCommitted;
         DataContext = viewModel;
+        if (viewModel.Dashboard is { } dashboard) dashboard.Settings.PropertyChanged += OnSettingsChanged;
+        if (viewModel.PomodoroOverlay is { } overlay) overlay.PropertyChanged += OnPomodoroChanged;
+        UpdateScene();
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         viewModel.ExitRequested += OnExitRequested;
         if (viewModel.PomodoroOverlay is not null)
@@ -47,6 +54,7 @@ public partial class MainWindow : Window
 
     private void OnCompletionCommitted(object? sender, EventArgs e)
     {
+        MascotScene.Celebrate();
         if (_viewModel.Dashboard is { } dashboard
             && (dashboard.Today.ComboCount >= 2
                 ? dashboard.Settings.ComboSoundEnabled
@@ -54,10 +62,25 @@ public partial class MainWindow : Window
             _completionSound.Play(dashboard.Today.ComboCount, dashboard.Settings.MasterVolume);
     }
 
+    private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e) => UpdateScene();
+
+    private void OnPomodoroChanged(object? sender, PropertyChangedEventArgs e) => UpdateScene();
+
+    private void UpdateScene()
+    {
+        var settings = _viewModel.Dashboard?.Settings;
+        var motion = settings is not null && settings.AnimationsEnabled && !settings.ReducedMotionEnabled;
+        AmbientScene.MotionEnabled = motion && _viewModel.DisplayMode == ShellDisplayMode.Dashboard;
+        MascotScene.MotionEnabled = motion;
+        MascotScene.MascotState = _viewModel.PomodoroOverlay?.IsRunning == true
+            ? (_viewModel.PomodoroOverlay.IsFocus ? "focus" : "rest") : "idle";
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ShellViewModel.DisplayMode))
         {
+            UpdateScene();
             _modeController.Apply(
                 _viewModel.DisplayMode,
                 _viewModel.Dashboard?.Settings.OverlayLeft,
@@ -90,11 +113,16 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnOverlayTimerTick(object? sender, EventArgs e)
+    private async void OnOverlayTimerTick(object? sender, EventArgs e)
     {
         if (_viewModel.PomodoroOverlay?.RefreshCommand.CanExecute(null) == true)
         {
-            _viewModel.PomodoroOverlay.RefreshCommand.Execute(null);
+            await _viewModel.PomodoroOverlay.RefreshAsync();
+            var snapshot = _viewModel.PomodoroOverlay.Snapshot;
+            if (_viewModel.Dashboard?.Settings is { } settings)
+                _pomodoroSound.PlayCue(CompletionSound.PomodoroCue(_lastAudioSnapshot, snapshot,
+                    settings.BellSoundEnabled, settings.TickSoundEnabled), settings.MasterVolume);
+            _lastAudioSnapshot = snapshot;
         }
     }
 
@@ -126,6 +154,11 @@ public partial class MainWindow : Window
         _feedbackTimer.Tick -= OnFeedbackTimerTick;
         if (_viewModel.Dashboard is not null) _viewModel.Dashboard.Today.CompletionCommitted -= OnCompletionCommitted;
         _completionSound.Dispose();
+        _pomodoroSound.Dispose();
+        if (_viewModel.Dashboard is { } dashboard) dashboard.Settings.PropertyChanged -= OnSettingsChanged;
+        if (_viewModel.PomodoroOverlay is { } overlay) overlay.PropertyChanged -= OnPomodoroChanged;
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.ExitRequested -= OnExitRequested;
         _overlayTimer.Tick -= OnOverlayTimerTick;
         LocationChanged -= OnLocationChanged;
         Closed -= OnClosed;

@@ -33,7 +33,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
 | M10 | Windows lifecycle, tray, notification và startup | Đã triển khai; chờ kiểm thử Windows thủ công | M04, M05, M06 |
-| M11 | Accessibility, visual polish và asset integration | Chưa bắt đầu | M07–M10 |
+| M11 | Accessibility, visual polish và asset integration | Đã triển khai; chờ kiểm thử visual/accessibility thủ công | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
 
 Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
@@ -295,25 +295,27 @@ Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không
 
 ### Phạm vi
 
-- [ ] Tích hợp normalized mascot frames `320×320`.
-- [ ] Idle/Focus/Celebrate/Rest đúng trạng thái.
-- [ ] Cloud translate, flag 6 fps, grass 4 fps và lá rơi thưa.
-- [ ] Reduced Motion dừng ambient và dùng frame `00`.
-- [ ] Nearest-neighbor scaling, không blur pixel-art.
+- [x] Tích hợp normalized mascot frames `320×320`.
+- [x] Idle/Focus/Celebrate/Rest đúng trạng thái.
+- [x] Cloud translate, flag 6 fps, grass 4 fps và lá rơi thưa.
+- [x] Reduced Motion dừng ambient và dùng frame `00`.
+- [x] Nearest-neighbor scaling, không blur pixel-art.
 - [ ] Kiểm tra 100%/150%/200% DPI.
-- [ ] Hoàn thiện tab order, focus visual, accessible name và contrast.
-- [ ] Thông tin không phụ thuộc duy nhất vào màu/âm thanh/animation.
-- [ ] Thay placeholder audio bằng bộ asset có quyền sử dụng rõ ràng.
-- [ ] Ghi nguồn/license cho asset phát hành.
+- [x] Hoàn thiện tab order, focus visual, accessible name và contrast.
+- [x] Thông tin không phụ thuộc duy nhất vào màu/âm thanh/animation.
+- [x] Thay placeholder audio bằng bộ asset có quyền sử dụng rõ ràng.
+- [x] Ghi nguồn/license cho asset phát hành.
 
 ### Hoàn thành khi
 
 - [ ] Mascot/cờ/cỏ không trượt pivot khi loop trong WPF thật.
 - [ ] Animation không làm UI thread giật hoặc tăng CPU bất hợp lý.
-- [ ] Reduced Motion và muted mode vẫn dùng đủ chức năng.
+- [x] Reduced Motion và muted mode vẫn dùng đủ chức năng.
 - [ ] Manual visual/accessibility checklist pass.
-- [ ] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: finish medieval visual and accessibility pass`.
+- [x] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: finish medieval visual and accessibility pass`.
+
+Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Không đánh dấu hoàn thành M11 trước khi các kiểm tra thủ công pass.
 
 ## M12 — Installer và release verification
 

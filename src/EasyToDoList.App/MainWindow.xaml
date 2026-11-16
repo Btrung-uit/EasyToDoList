@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:shell="clr-namespace:EasyToDoList.App.Shell" xmlns:today="clr-namespace:EasyToDoList.App.Features.Today"
+        xmlns:presentation="clr-namespace:EasyToDoList.App.Presentation"
         mc:Ignorable="d"
         Title="EasyToDoList — Hội quán nhiệm vụ"
         Width="1180" Height="760" MinWidth="900" MinHeight="600"
@@ -16,10 +17,11 @@
                Stretch="UniformToFill"
                RenderOptions.BitmapScalingMode="NearestNeighbor" />
         <Border Background="#3D182319" />
+        <presentation:GuildScene x:Name="AmbientScene" />
 
-        <Grid Margin="32">
-            <Grid.Style>
-                <Style TargetType="Grid">
+        <ScrollViewer x:Name="DashboardScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding DisplayMode}" Value="{x:Static shell:ShellDisplayMode.Dashboard}">
@@ -27,7 +29,12 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </Grid.Style>
+            </ScrollViewer.Style>
+        <Grid MinWidth="1144" MinHeight="664"
+              Width="{Binding ViewportWidth, ElementName=DashboardScroll}"
+              Height="{Binding ViewportHeight, ElementName=DashboardScroll}">
+        <Grid Margin="32">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="24" />
@@ -94,9 +101,11 @@
                             <Run Text="Hạng " /><Run Text="{Binding Dashboard.Profile.Progress.Rank, Mode=OneWay}" /><Run Text=" · Cấp " /><Run Text="{Binding Dashboard.Profile.Progress.Level, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock Margin="0,4,0,0" Style="{StaticResource GuildWoodBodyTextStyle}"><Run Text="EXP " /><Run Text="{Binding Dashboard.Profile.Progress.TotalExperience, Mode=OneWay}" /><Run Text=" · Coin " /><Run Text="{Binding Dashboard.Profile.Coins, Mode=OneWay}" /></TextBlock>
+                        <presentation:GuildScene x:Name="MascotScene" Height="160" MascotOnly="True" />
                         <Border Height="2" Margin="0,20" Background="{StaticResource GuildGoldBrush}" />
                         <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource GuildCreamBrush}" Text="Pomodoro" />
-                        <TextBlock Margin="0,6,0,18" Style="{StaticResource GuildWoodBodyTextStyle}" Text="Chưa bắt đầu phiên tập trung." />
+                        <TextBlock Margin="0,6,0,0" Style="{StaticResource GuildWoodBodyTextStyle}" Text="{Binding PomodoroOverlay.PhaseLabel}" />
+                        <TextBlock Margin="0,4,0,18" Style="{StaticResource GuildWoodBodyTextStyle}" Text="{Binding PomodoroOverlay.StatusLabel}" />
                         <Button Command="{Binding ShowOverlayCommand}"
                                 CommandParameter="{x:Static shell:OverlayMode.Pomodoro}"
                                 Content="Mở đồng hồ"
@@ -105,6 +114,8 @@
                 </Border>
             </Grid>
         </Grid>
+        </Grid>
+        </ScrollViewer>
 
         <Border Margin="14" Padding="14"
                 Background="{StaticResource GuildWoodBrush}"
@@ -162,7 +173,7 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hiện tại" />
-                            <ListBox Grid.Row="2" ItemsSource="{Binding Dashboard.Today.Items}"
+                            <ListBox AutomationProperties.Name="Nhiệm vụ trong Overlay" Grid.Row="2" ItemsSource="{Binding Dashboard.Today.Items}"
                                      Background="Transparent" BorderThickness="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemTemplate>

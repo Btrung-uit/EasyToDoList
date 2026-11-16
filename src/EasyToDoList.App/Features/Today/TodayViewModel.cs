@@ -54,7 +54,16 @@ public sealed class TodayViewModel : ViewModelBase
     public string ComboLabel => IsComboActive ? $"Combo ×{ComboCount} — Tuyệt lắm!" : "Hoàn thành!";
     public bool HasFeedback => Feedback.Count > 0;
     public bool MotionEnabled => _motionEnabled();
-    public string MascotFrame => $"/EasyToDoList.App;component/Assets/Celebrate/celebrate-{(MotionEnabled && HasCombo ? (int)Math.Max(0, (2 - (_comboUntil - _clock.UtcNow).TotalSeconds) * 8) % 6 : 0):00}.png";
+    public string MascotFrame
+    {
+        get
+        {
+            var elapsed = 2 - (_comboUntil - _clock.UtcNow).TotalSeconds;
+            var (state, frame) = SceneAnimation.Mascot("idle", elapsed, MotionEnabled && HasCombo, HasCombo ? 0 : null);
+            if (state == "idle") frame = 0;
+            return $"/EasyToDoList.App;component/Assets/Mascots/{state}/{state}-{frame:00}.png";
+        }
+    }
     public ICommand UndoCommand { get; }
     public string Title { get => _title; set => SetField(ref _title, value); }
     public DateTime? StartDate { get => _startDate; set => SetField(ref _startDate, value); }

@@ -8,6 +8,17 @@ namespace EasyToDoList.App.Tests.Features;
 public sealed class CompletionFeedbackTests
 {
     [Fact]
+    public async Task Mascot_celebrates_at_ten_fps_once_then_returns_to_idle()
+    {
+        var (vm, _, clock) = await CreateAsync();
+        await vm.CompleteAsync(vm.Items[0]);
+        clock.Advance(350);
+        Assert.EndsWith("Mascots/celebrate/celebrate-03.png", vm.MascotFrame);
+        clock.Advance(300);
+        Assert.EndsWith("Mascots/idle/idle-00.png", vm.MascotFrame);
+    }
+
+    [Fact]
     public async Task Pending_completion_disables_only_its_own_row()
     {
         var (vm, service, _) = await CreateAsync();

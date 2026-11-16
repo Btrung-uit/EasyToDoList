@@ -16,6 +16,7 @@ using EasyToDoList.App.Features.Settings;
 using EasyToDoList.App.Features.Today;
 using EasyToDoList.App.Shell;
 using EasyToDoList.App.Windows;
+using EasyToDoList.App.Presentation;
 using EasyToDoList.Core.Common;
 using EasyToDoList.Core.Economy;
 using EasyToDoList.Core.Pomodoro;
@@ -62,6 +63,14 @@ public sealed class CompletionWpfTests
         {
             VisualTree = new FrameworkElementFactory(typeof(TodayView)),
         });
+        foreach (var (model, view) in new[]
+        {
+            (typeof(CalendarViewModel), typeof(CalendarView)),
+            (typeof(ProfileViewModel), typeof(ProfileView)),
+            (typeof(SettingsViewModel), typeof(SettingsView)),
+            (typeof(global::EasyToDoList.App.Features.Pomodoro.PomodoroViewModel), typeof(global::EasyToDoList.App.Features.Pomodoro.PomodoroView)),
+        })
+            app.Resources.Add(new DataTemplateKey(model), new DataTemplate(model) { VisualTree = new FrameworkElementFactory(view) });
         using var bindingLog = new StringWriter();
         using var listener = new TextWriterTraceListener(bindingLog);
         PresentationTraceSources.DataBindingSource.Listeners.Add(listener);
@@ -95,6 +104,16 @@ public sealed class CompletionWpfTests
         try
         {
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var scenes = Descendants<GuildScene>(window).ToArray();
+            Assert.Equal(2, scenes.Length);
+            Assert.All(scenes, scene => Assert.True(scene.IsAnimating));
+            foreach (var state in new[] { "idle", "focus", "celebrate", "rest" })
+                for (var frame = 0; frame < 6; frame++)
+                {
+                    var image = new BitmapImage(new Uri($"pack://application:,,,/EasyToDoList.App;component/Assets/Mascots/{state}/{state}-{frame:00}.png"));
+                    Assert.Equal(320, image.PixelWidth);
+                    Assert.Equal(320, image.PixelHeight);
+                }
             var first = today.Items.Single(x => x.Title.StartsWith("Ôn bài"));
             await today.CompleteAsync(first);
             Assert.Equal(6, profile.Coins);
@@ -110,6 +129,7 @@ public sealed class CompletionWpfTests
             shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.True(window.Topmost);
+            Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
             var undo = Descendants<Button>(window).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
             Assert.True(undo.Focusable && undo.IsEnabled);
             Assert.NotEmpty(UIElementAutomationPeer.CreatePeerForElement(undo)!.GetName());
@@ -132,6 +152,72 @@ public sealed class CompletionWpfTests
             shell.ShowDashboardCommand.Execute(null);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.False(window.Topmost);
+            Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
+            foreach (var page in new[] { "Today", "Calendar", "Pomodoro", "Profile", "Settings" })
+            {
+                dashboard.NavigateCommand.Execute(page);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                foreach (var control in Descendants<Control>(window).Where(x => x.IsVisible && x.Focusable
+                    && (x.GetType() == typeof(TextBox) || x is DatePicker or Slider or CheckBox or DataGrid or ListBox || x is Button { Content: not null })))
+                    Assert.False(string.IsNullOrWhiteSpace(UIElementAutomationPeer.CreatePeerForElement(control)?.GetName()), $"Missing name: {page}/{control.GetType().Name}");
+            }
+            dashboard.NavigateCommand.Execute("Today");
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            foreach (var scale in new[] { 1d, 1.5, 2d }) SaveImage(window, $"m11-dashboard-{scale * 100:0}.png", scale);
+            settings.ReducedMotionEnabled = false;
+            Assert.All(scenes, scene => Assert.True(scene.IsAnimating));
+            settings.AnimationsEnabled = false;
+            Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
+            settings.AnimationsEnabled = true;
+            shell.HideToTray();
+            Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
+            shell.ShowDashboardCommand.Execute(null);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.All(scenes, scene => Assert.True(scene.IsAnimating));
+            var navigation = Descendants<Button>(window).Single(button => button.IsVisible && Equals(button.Content, "Hôm nay"));
+            Keyboard.Focus(navigation);
+            Assert.True(navigation.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next)));
+            Assert.Equal("Lịch sử", Assert.IsType<Button>(Keyboard.FocusedElement).Content);
+            var mascotScene = scenes.Single(scene => scene.MascotOnly);
+            await shell.PomodoroOverlay!.StartAsync();
+            Assert.Equal("focus", mascotScene.MascotState);
+            await shell.PomodoroOverlay.PauseAsync();
+            Assert.Equal("idle", mascotScene.MascotState);
+            await shell.PomodoroOverlay.ResumeAsync();
+            clock.Advance(25 * 60 * 1000);
+            await shell.PomodoroOverlay.RefreshAsync();
+            Assert.True(shell.PomodoroOverlay.IsAwaiting);
+            await shell.PomodoroOverlay.StartAsync();
+            Assert.Equal("rest", mascotScene.MascotState);
+            await shell.PomodoroOverlay.ConfirmStopAsync();
+            Assert.Equal("idle", mascotScene.MascotState);
+            var longTitle = string.Concat(Enumerable.Repeat("Nhiệm vụ dài cần xuống dòng ", 6)).Trim();
+            await service.CreateAsync(new CreateTodoCommand(longTitle, clock.LocalToday, clock.LocalToday), CancellationToken.None);
+            for (var i = 0; i < 35; i++)
+                await service.CreateAsync(new CreateTodoCommand($"Nhiệm vụ viewport {i}", clock.LocalToday, clock.LocalToday), CancellationToken.None);
+            await today.LoadAsync();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var taskList = Descendants<ListBox>(window).Single(list => list.IsVisible && AutomationProperties.GetName(list) == "Nhiệm vụ hôm nay");
+            var longText = Descendants<TextBlock>(taskList).Single(text => text.Text == longTitle);
+            Assert.True(longText.ActualWidth < 600, $"Long title escaped viewport: {longText.ActualWidth}");
+            Assert.True(longText.ActualHeight > 30, "Long title should wrap onto multiple lines.");
+            var listScroll = Descendants<ScrollViewer>(taskList).First();
+            Assert.True(listScroll.ScrollableHeight > 0, "Task list must retain its own finite viewport.");
+            using var process = Process.GetCurrentProcess();
+            var cpuStart = process.TotalProcessorTime;
+            var elapsed = Stopwatch.StartNew();
+            await Task.Delay(1100);
+            elapsed.Stop();
+            var cpu = process.TotalProcessorTime - cpuStart;
+            settings.ReducedMotionEnabled = true;
+            var stoppedCpuStart = process.TotalProcessorTime;
+            await Task.Delay(1100);
+            var stoppedCpu = process.TotalProcessorTime - stoppedCpuStart;
+            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "m11-runtime.txt"),
+                $"Animation observation: {elapsed.Elapsed.TotalMilliseconds:F0} ms wall, {cpu.TotalMilliseconds:F0} ms process CPU; 2 scenes at 24 Hz.\n" +
+                $"Reduced Motion baseline (1100 ms): {stoppedCpu.TotalMilliseconds:F0} ms process CPU; WPF rendering tier {RenderCapability.Tier >> 16}.\n" +
+                "STA window; SQLite in-memory; muted. Reduced Motion/disabled/hidden/Overlay stop decorative timers.\n" +
+                "RenderTargetBitmap 96/144/192 DPI is simulated; physical monitor DPI, Narrator and audible quality remain manual.\n");
             clock.Advance(5001);
             today.RefreshFeedback();
             Assert.Empty(today.Feedback);
@@ -157,10 +243,10 @@ public sealed class CompletionWpfTests
         }
     }
 
-    private static void SaveImage(Window window, string name)
+    private static void SaveImage(Window window, string name, double scale = 1)
     {
         window.UpdateLayout();
-        var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        var bitmap = new RenderTargetBitmap((int)(window.ActualWidth * scale), (int)(window.ActualHeight * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
         bitmap.Render(window);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));

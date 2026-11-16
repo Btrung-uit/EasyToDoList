@@ -42,6 +42,8 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
     public string? ErrorMessage { get => _errorMessage; private set => SetField(ref _errorMessage, value); }
     public bool HasSession => _snapshot is not null;
     public bool IsRunning => _snapshot?.Status == PomodoroStatus.Running;
+    public bool IsFocus => _snapshot?.Phase == PomodoroPhase.Focus;
+    internal PomodoroSnapshot? Snapshot => _snapshot;
     public bool IsPaused => _snapshot?.Status == PomodoroStatus.Paused;
     public bool IsAwaiting => _snapshot?.Status == PomodoroStatus.Awaiting;
     public bool CanStart => _snapshot is null || IsAwaiting;
@@ -157,6 +159,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
             : $"{snapshot.RemainingSeconds / 60:00}:{snapshot.RemainingSeconds % 60:00}";
         OnPropertyChanged(nameof(HasSession));
         OnPropertyChanged(nameof(IsRunning));
+        OnPropertyChanged(nameof(IsFocus));
         OnPropertyChanged(nameof(IsPaused));
         OnPropertyChanged(nameof(IsAwaiting));
         OnPropertyChanged(nameof(CanStart));
