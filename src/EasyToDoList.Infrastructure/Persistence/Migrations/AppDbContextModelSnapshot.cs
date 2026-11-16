@@ -190,6 +190,23 @@ namespace EasyToDoList.Infrastructure.Persistence.Migrations
                     b.ToTable("TodoItems", (string)null);
                 });
 
+            modelBuilder.Entity("EasyToDoList.Infrastructure.Persistence.AppSettingsRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SettingsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppSettings", (string)null);
+                });
+
             modelBuilder.Entity("EasyToDoList.Infrastructure.Persistence.PlayerProfileRow", b =>
                 {
                     b.Property<int>("Id")

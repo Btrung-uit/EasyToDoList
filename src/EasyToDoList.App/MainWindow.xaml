@@ -72,28 +72,16 @@
                 <Border Grid.Column="0" Style="{StaticResource GuildPanelStyle}">
                     <StackPanel>
                         <TextBlock Margin="0,0,0,16" Style="{StaticResource GuildHeadingTextStyle}" Text="Sổ hành trình" />
-                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" FontWeight="SemiBold" Text="Hôm nay" />
-                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" Text="Lịch sử" />
-                        <TextBlock Margin="0,0,0,12" Style="{StaticResource GuildBodyTextStyle}" Text="Hồ sơ mạo hiểm giả" />
-                        <TextBlock Style="{StaticResource GuildBodyTextStyle}" Text="Cài đặt" />
+                        <Button Margin="0,0,0,8" Command="{Binding Dashboard.NavigateCommand}" CommandParameter="Today" Content="Hôm nay" Style="{StaticResource GuildButtonStyle}" />
+                        <Button Margin="0,0,0,8" Command="{Binding Dashboard.NavigateCommand}" CommandParameter="Calendar" Content="Lịch sử" Style="{StaticResource GuildButtonStyle}" />
+                        <Button Margin="0,0,0,8" Command="{Binding Dashboard.NavigateCommand}" CommandParameter="Pomodoro" Content="Pomodoro" Style="{StaticResource GuildButtonStyle}" />
+                        <Button Margin="0,0,0,8" Command="{Binding Dashboard.NavigateCommand}" CommandParameter="Profile" Content="Hồ sơ" Style="{StaticResource GuildButtonStyle}" />
+                        <Button Command="{Binding Dashboard.NavigateCommand}" CommandParameter="Settings" Content="Cài đặt" Style="{StaticResource GuildButtonStyle}" />
                     </StackPanel>
                 </Border>
 
                 <Border Grid.Column="2" Style="{StaticResource GuildPanelStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Bảng nhiệm vụ hôm nay" />
-                        <StackPanel Grid.Row="1" MaxWidth="520" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock HorizontalAlignment="Center" FontSize="42" FontWeight="Bold"
-                                       Foreground="{StaticResource GuildMossBrush}" Text="0" />
-                            <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" TextAlignment="Center"
-                                       Style="{StaticResource GuildBodyTextStyle}"
-                                       Text="Các nhiệm vụ trong ngày sẽ được niêm yết tại đây." />
-                        </StackPanel>
-                    </Grid>
+                    <ContentControl Content="{Binding Dashboard.Current}" />
                 </Border>
 
                 <Border Grid.Column="4" Padding="20"
@@ -102,7 +90,10 @@
                         BorderThickness="3" CornerRadius="5">
                     <StackPanel>
                         <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource GuildCreamBrush}" Text="Mạo hiểm giả" />
-                        <TextBlock Margin="0,6,0,0" Style="{StaticResource GuildWoodBodyTextStyle}" Text="Hạng F · Cấp 1" />
+                        <TextBlock Margin="0,6,0,0" Style="{StaticResource GuildWoodBodyTextStyle}">
+                            <Run Text="Hạng " /><Run Text="{Binding Dashboard.Profile.Progress.Rank, Mode=OneWay}" /><Run Text=" · Cấp " /><Run Text="{Binding Dashboard.Profile.Progress.Level, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Margin="0,4,0,0" Style="{StaticResource GuildWoodBodyTextStyle}"><Run Text="EXP " /><Run Text="{Binding Dashboard.Profile.Progress.TotalExperience, Mode=OneWay}" /><Run Text=" · Coin " /><Run Text="{Binding Dashboard.Profile.Coins, Mode=OneWay}" /></TextBlock>
                         <Border Height="2" Margin="0,20" Background="{StaticResource GuildGoldBrush}" />
                         <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource GuildCreamBrush}" Text="Pomodoro" />
                         <TextBlock Margin="0,6,0,18" Style="{StaticResource GuildWoodBodyTextStyle}" Text="Chưa bắt đầu phiên tập trung." />

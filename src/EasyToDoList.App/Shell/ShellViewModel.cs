@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using EasyToDoList.Core.Pomodoro;
+using EasyToDoList.App.Features.Dashboard;
 
 namespace EasyToDoList.App.Shell;
 
@@ -12,9 +13,10 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     private OverlayMode _overlayMode = OverlayMode.Todo;
     private string? _exitErrorMessage;
 
-    public ShellViewModel(IPomodoroService pomodoroService)
+    public ShellViewModel(IPomodoroService pomodoroService, DashboardViewModel? dashboard = null)
     {
         _pomodoroService = pomodoroService;
+        Dashboard = dashboard;
         ShowDashboardCommand = new RelayCommand(_ => DisplayMode = ShellDisplayMode.Dashboard);
         ShowOverlayCommand = new RelayCommand(ShowOverlay);
         HideToTrayCommand = new RelayCommand(_ => HideToTray());
@@ -24,6 +26,8 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public event EventHandler? ExitRequested;
+
+    public DashboardViewModel? Dashboard { get; }
 
     public ShellDisplayMode DisplayMode
     {

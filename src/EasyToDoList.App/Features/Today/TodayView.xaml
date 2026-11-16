@@ -1,0 +1,16 @@
+<UserControl x:Class="EasyToDoList.App.Features.Today.TodayView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hôm nay"/>
+    <Grid Grid.Row="1" Margin="0,16,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="120"/><ColumnDefinition Width="120"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel Margin="0,0,8,0"><TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" ToolTip="Tên nhiệm vụ"/><TextBlock Foreground="{StaticResource GuildDangerBrush}" Text="{Binding TitleError}" TextWrapping="Wrap"/></StackPanel>
+      <DatePicker Grid.Column="1" Margin="0,0,8,0" SelectedDate="{Binding StartDate}" ToolTip="Ngày bắt đầu"/>
+      <StackPanel Grid.Column="2" Margin="0,0,8,0"><DatePicker SelectedDate="{Binding Deadline}" ToolTip="Hạn chót"/><TextBlock Foreground="{StaticResource GuildDangerBrush}" Text="{Binding DeadlineError}" TextWrapping="Wrap"/></StackPanel>
+      <Button Grid.Column="3" Command="{Binding SaveCommand}" Content="Lưu" Style="{StaticResource GuildButtonStyle}"/>
+    </Grid>
+    <Grid Grid.Row="2"><ListBox ItemsSource="{Binding Items}" Background="Transparent" BorderThickness="0"><ListBox.ItemTemplate><DataTemplate><Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock FontWeight="SemiBold" Text="{Binding Title}"/><TextBlock FontSize="12"><Run Text="Hạn "/><Run Text="{Binding Deadline}"/></TextBlock></StackPanel><Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Content="Sửa"/><Button Grid.Column="2" Margin="8,0,0,0" Command="{Binding DataContext.CompleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Content="Xong"/><Button Grid.Column="3" Margin="8,0,0,0" Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Content="Hủy"/></Grid></DataTemplate></ListBox.ItemTemplate></ListBox>
+      <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GuildBodyTextStyle}" Text="Chưa có nhiệm vụ cho hôm nay." Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+      <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GuildBodyTextStyle}" Text="Đang tải nhiệm vụ…" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+      <TextBlock VerticalAlignment="Bottom" Foreground="{StaticResource GuildDangerBrush}" Text="{Binding ErrorMessage}"/>
+    </Grid>
+  </Grid>
+</UserControl>
