@@ -30,7 +30,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M05 | Pomodoro state machine và persistence | Hoàn thành | M02, M03 |
 | M06 | WPF shell và medieval design foundation | Hoàn thành | M01, M05 |
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
-| M08 | Compact Overlay và Pomodoro UI | Chưa bắt đầu | M05, M06 |
+| M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Chưa bắt đầu | M03, M07, M08 |
 | M10 | Windows lifecycle, tray, notification và startup | Chưa bắt đầu | M04, M05, M06 |
 | M11 | Accessibility, visual polish và asset integration | Chưa bắt đầu | M07–M10 |
@@ -220,21 +220,21 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Overlay To-do hiển thị công việc hiện tại và cho phép tick.
-- [ ] Overlay Pomodoro hiển thị phase, thời gian và Start/Pause/Resume/Skip/Stop.
-- [ ] Nút mở Dashboard và đổi Overlay mode.
-- [ ] Giữ vị trí Overlay giữa các lần mở.
-- [ ] Timer UI refresh từ snapshot, không tự quản lý thời gian.
-- [ ] Stop có confirmation; Skip Focus không thưởng.
-- [ ] Thể hiện rõ Focus, Short Break và Long Break.
+- [x] Overlay To-do hiển thị công việc hiện tại và cho phép tick.
+- [x] Overlay Pomodoro hiển thị phase, thời gian và Start/Pause/Resume/Skip/Stop.
+- [x] Nút mở Dashboard và đổi Overlay mode.
+- [x] Giữ vị trí Overlay giữa các lần mở.
+- [x] Timer UI refresh từ snapshot, không tự quản lý thời gian.
+- [x] Stop có confirmation; Skip Focus không thưởng.
+- [x] Thể hiện rõ Focus, Short Break và Long Break.
 
 ### Hoàn thành khi
 
-- [ ] Overlay luôn nổi và vẫn thao tác được khi app khác đang focus.
-- [ ] Chuyển Dashboard ↔ Overlay không mất timer hoặc unsaved state hợp lệ.
-- [ ] Không có logic economy/Pomodoro trong code-behind.
-- [ ] ViewModel tests, `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: add compact todo and pomodoro overlay`.
+- [x] Overlay luôn nổi và vẫn thao tác được khi app khác đang focus.
+- [x] Chuyển Dashboard ↔ Overlay không mất timer hoặc unsaved state hợp lệ.
+- [x] Không có logic economy/Pomodoro trong code-behind.
+- [x] ViewModel tests, `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: add compact todo and pomodoro overlay`.
 
 ## M09 — Animation hoàn thành, combo, Undo và reward feedback
 
