@@ -38,6 +38,8 @@ public sealed class CompletionFeedbackTests
     {
         var (vm, service, _) = await CreateAsync();
         service.Pending = new TaskCompletionSource<TodoCompletionResult>();
+        vm.EditCommand.Execute(vm.Items[0]);
+        var editedTitle = vm.Title;
         var task = vm.CompleteAsync(vm.Items[0]);
         Assert.Empty(vm.Feedback);
         Assert.False(vm.Items[0].IsCompleting);
@@ -46,6 +48,8 @@ public sealed class CompletionFeedbackTests
         Assert.Empty(vm.Feedback);
         Assert.Equal(2, vm.Items.Count);
         Assert.NotNull(vm.ErrorMessage);
+        Assert.True(vm.IsEditing);
+        Assert.Equal(editedTitle, vm.Title);
     }
 
     [Fact]

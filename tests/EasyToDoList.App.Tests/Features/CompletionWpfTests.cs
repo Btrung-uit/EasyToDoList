@@ -114,14 +114,34 @@ public sealed class CompletionWpfTests
                     Assert.Equal(320, image.PixelWidth);
                     Assert.Equal(320, image.PixelHeight);
                 }
+            var formFields = Descendants<TextBox>(window).Where(control => AutomationProperties.GetName(control) == "Tên nhiệm vụ")
+                .Cast<FrameworkElement>().Concat(Descendants<DatePicker>(window))
+                .Concat(Descendants<Button>(window).Where(button => Equals(button.Content, "Lưu"))).ToArray();
+            Assert.Equal(4, formFields.Length);
+            Assert.True(formFields.Max(field => field.ActualWidth) - formFields.Min(field => field.ActualWidth) <= 1,
+                $"Editor widths differ: {string.Join(", ", formFields.Select(field => field.ActualWidth))}");
+            Assert.All(formFields, field => Assert.Equal(40, field.ActualHeight));
+            var dashboardScroll = Descendants<ScrollViewer>(window).Single(view => view.Name == "DashboardScroll");
+            var viewportBeforeCompletion = dashboardScroll.ViewportHeight;
+            var scrollBeforeCompletion = dashboardScroll.ScrollableHeight;
             var first = today.Items.Single(x => x.Title.StartsWith("Ôn bài"));
+            today.EditCommand.Execute(first);
             await today.CompleteAsync(first);
+            Assert.False(today.IsEditing);
             Assert.Equal(6, profile.Coins);
             Assert.Equal(13, Assert.Single(today.Feedback).Result.EarlyBonusExperience);
             clock.Advance(240);
             today.RefreshFeedback();
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal(viewportBeforeCompletion, dashboardScroll.ViewportHeight);
+            Assert.Equal(scrollBeforeCompletion, dashboardScroll.ScrollableHeight);
+            var root = (FrameworkElement)window.Content;
+            var toast = Assert.Single(Descendants<CompletionFeedbackView>(window));
+            var toastBounds = toast.TransformToAncestor(root).TransformBounds(new Rect(toast.RenderSize));
+            Assert.InRange(root.ActualWidth - toastBounds.Right, 15, 17);
+            Assert.InRange(root.ActualHeight - toastBounds.Bottom, 15, 17);
             SaveImage(window, "m09-dashboard.png");
+            SaveImage(window, "todo-completion-toast-dashboard.png");
             Assert.Contains(Descendants<CompletionSurface>(window), x => x.Progress > 0);
             var mascot = Descendants<Image>(window).Single(x => AutomationProperties.GetName(x).StartsWith("Hiệp sĩ"));
             Assert.NotNull(mascot.Source);
@@ -136,6 +156,9 @@ public sealed class CompletionWpfTests
             window.Activate();
             Keyboard.Focus(undo);
             Assert.Equal(undo, Keyboard.FocusedElement);
+            var dashboardButton = Descendants<Button>(window).Single(button => button.IsVisible && Equals(button.Content, "Mở Dashboard"));
+            toastBounds = toast.TransformToAncestor(root).TransformBounds(new Rect(toast.RenderSize));
+            Assert.False(toastBounds.IntersectsWith(dashboardButton.TransformToAncestor(root).TransformBounds(new Rect(dashboardButton.RenderSize))));
             SaveImage(window, "m09-overlay.png");
             var feedback = Assert.Single(today.Feedback);
             await today.UndoAsync(feedback);

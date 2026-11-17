@@ -88,6 +88,7 @@ public sealed class TodayViewModel : ViewModelBase
         {
             var items = await ReadAsync(() => _service.GetTodayAsync(_clock.LocalToday, CancellationToken.None));
             var ids = items.Select(x => x.Id).ToHashSet();
+            if (_editingId is Guid editingId && !ids.Contains(editingId)) ResetForm();
             foreach (var old in Items.Where(x => !ids.Contains(x.Id) && !x.IsCompleting).ToArray()) Items.Remove(old);
             foreach (var item in items)
             {
@@ -160,6 +161,7 @@ public sealed class TodayViewModel : ViewModelBase
             TodoCompletionResult result;
             try { result = await ReadAsync(() => _service.CompleteAsync(row.Id, CancellationToken.None)); }
             catch (Exception) { ErrorMessage = "Không thể hoàn thành nhiệm vụ. Hãy thử lại."; return; }
+            if (_editingId == row.Id) ResetForm();
             RefreshFeedback();
             if (ComboCount == 0) _comboGeneration++;
             ComboCount++;

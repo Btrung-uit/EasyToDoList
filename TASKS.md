@@ -345,6 +345,16 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 
 ---
 
+## Sửa lỗi sau kiểm thử người dùng — 17/11/2026
+
+- [x] Tên nhiệm vụ, ngày bắt đầu, hạn chót và Lưu có cùng chiều rộng và cao 40 DIP.
+- [x] Hoàn thành nhiệm vụ đang sửa đưa form về tạo mới; reload bỏ trạng thái sửa nếu nhiệm vụ đã đóng, không làm mất bản nháp của nhiệm vụ khác.
+- [x] Feedback hoàn thành/EXP/coin/Hoàn tác nằm trong một toast góc dưới bên phải, không chiếm hàng layout hoặc làm xuất hiện scrollbar của Dashboard; Overlay chừa nút điều hướng.
+- [x] Hoàn tác vẫn có hạn 5 giây và đảo ledger đúng một lần; complete thất bại giữ nguyên form sửa.
+- [x] Regression SQLite tái hiện Sửa → Xong/Hủy → Lưu cùng tên hoặc tên khác; kiểm tra WPF đo bốn ô, viewport, vị trí toast và keyboard Undo.
+
+Kiểm chứng: 216/216 tests pass; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
+
 ## Sau MVP — chưa thực hiện
 
 Không đưa các mục sau vào M01–M12:

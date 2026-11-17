@@ -12,7 +12,7 @@
         Background="{StaticResource GuildWoodBrush}"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Closing="OnClosing">
-    <Grid><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Grid>
         <Image Source="/EasyToDoList.App;component/Assets/Backgrounds/guild-valley.png"
                Stretch="UniformToFill"
                RenderOptions.BitmapScalingMode="NearestNeighbor" />
@@ -279,7 +279,19 @@
                        Text="{Binding ExitErrorMessage}"
                        TextWrapping="Wrap" />
         </Border>
-        <StackPanel Grid.Row="1" DataContext="{Binding Dashboard.Today}">
+        <StackPanel DataContext="{Binding Dashboard.Today}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    MaxWidth="340" Panel.ZIndex="10">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Margin" Value="16" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.DisplayMode, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     Value="{x:Static shell:ShellDisplayMode.Overlay}">
+                            <Setter Property="Margin" Value="16,16,16,96" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource GuildCreamBrush}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive"/>
             <today:CompletionFeedbackView/>
         </StackPanel>
