@@ -258,14 +258,17 @@ public sealed class CompletionWpfTests
             Assert.NotSame(PresentationSource.FromVisual(window), PresentationSource.FromVisual(toast));
             var overlayHeight = window.ActualHeight;
             await CheckOverlayOpacityAsync(window);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var undo = Descendants<Button>(toast).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
             Assert.True(undo.Focusable && undo.IsEnabled);
             Assert.NotEmpty(UIElementAutomationPeer.CreatePeerForElement(undo)!.GetName());
             window.Activate();
+            toast.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, Environment.TickCount, Key.Tab)
+                { RoutedEvent = Keyboard.PreviewKeyDownEvent });
             Keyboard.Focus(undo);
             Assert.Equal(undo, Keyboard.FocusedElement);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-            Assert.Equal(1, window.Opacity);
+            AssertNativeAlpha(window, 255);
             var popupBounds = ScreenBounds(toast);
             var overlayBounds = WindowBounds(window);
             Assert.False(popupBounds.IntersectsWith(overlayBounds),
@@ -320,6 +323,11 @@ public sealed class CompletionWpfTests
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.False(popup.IsOpen);
             Assert.False(window.Topmost);
+            AssertNativeAlpha(window, 255);
+            var compactButton = Assert.Single(Descendants<Button>(window), button => Equals(button.Content, "Thu gọn thành Overlay"));
+            Assert.Equal(OverlayMode.Pomodoro, compactButton.CommandParameter);
+            Assert.DoesNotContain(Descendants<Button>(window), button => Equals(button.Content, "Thoát") || Equals(button.Content, "Mở đồng hồ"));
+            Assert.DoesNotContain(Descendants<TextBlock>(window), text => text.IsVisible && text.Text is "Sẵn sàng" or "Tập trung" or "Đang chạy");
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
             Assert.DoesNotContain(Descendants<Button>(window), button => Equals(button.Content, "Hồ sơ"));
             foreach (var page in new[] { "Today", "Calendar", "Pomodoro", "Settings" })
@@ -334,6 +342,11 @@ public sealed class CompletionWpfTests
                     var preset = Descendants<Button>(window).Single(button => Equals(button.Content, "45/10"));
                     preset.Command.Execute(preset.CommandParameter);
                     Assert.Equal(45, pomodoroVm.FocusMinutes);
+                    Assert.Equal("Đang chọn", AutomationProperties.GetItemStatus(preset));
+                    var unselected = Descendants<Button>(window).Single(button => Equals(button.Content, "25/5"));
+                    Assert.NotEqual(unselected.Background, preset.Background);
+                    Assert.Equal(new Thickness(3), preset.BorderThickness);
+                    Assert.DoesNotContain(Descendants<TextBlock>(window), text => text.Text.StartsWith("Chọn nhịp") || text.Text.StartsWith("Đang chọn:"));
                     SaveImage(window, "pomodoro-presets.png");
                     advanced.IsExpanded = true;
                     await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
@@ -439,6 +452,9 @@ public sealed class CompletionWpfTests
             clock.Advance(5001);
             today.RefreshFeedback();
             Assert.Empty(today.Feedback);
+            shell.ShowOverlayCommand.Execute(OverlayMode.Pomodoro);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            await CheckDesktopTransparencyAsync(window);
             listener.Flush();
             Assert.True(string.IsNullOrWhiteSpace(bindingLog.ToString()), bindingLog.ToString());
         }
@@ -472,7 +488,12 @@ public sealed class CompletionWpfTests
             var bounds = feedbackView.TransformToAncestor(window).TransformBounds(new Rect(feedbackView.RenderSize));
             Assert.All(visible, button => Assert.False(bounds.IntersectsWith(button.TransformToAncestor(window).TransformBounds(new Rect(button.RenderSize)))));
         }
-        Assert.True(window.ActualWidth <= 320 && window.ActualHeight < 420);
+        Assert.True(window.ActualWidth <= 280 && window.ActualHeight < 240,
+            $"Compact overlay size {window.ActualWidth}x{window.ActualHeight}; frame {((FrameworkElement)window.FindName("OverlayFrame")).ActualHeight}; min {window.MinHeight}; sizing {window.SizeToContent}");
+        var clockText = Descendants<TextBlock>(window).Single(text => text.IsVisible && text.FontSize == 30);
+        var clockPeer = UIElementAutomationPeer.CreatePeerForElement(clockText)!;
+        Assert.Contains(clockText.Text, clockPeer.GetName());
+        Assert.DoesNotContain(Descendants<TextBlock>(window), text => text.IsVisible && text.Text is "Sẵn sàng" or "Tập trung" or "Đang chạy" or "Đã tạm dừng");
         if (visible.Length == 2)
             Assert.Equal(visible[0].TranslatePoint(new Point(), window).Y, visible[1].TranslatePoint(new Point(), window).Y);
     }
@@ -488,17 +509,88 @@ public sealed class CompletionWpfTests
             Assert.True(SetCursorPos((int)inside.X, (int)inside.Y));
             await Task.Delay(75);
             Assert.True(window.IsMouseOver);
-            Assert.Equal(1, window.Opacity);
+            AssertNativeAlpha(window, 255);
+            Descendants<Button>(window).First(button => button.IsVisible).Focus();
             Assert.True(SetCursorPos((int)SystemParameters.WorkArea.Left + 1, (int)SystemParameters.WorkArea.Bottom - 1));
             await Task.Delay(75);
             Assert.False(window.IsMouseOver);
-            Assert.Equal(0.6, window.Opacity);
+            AssertNativeAlpha(window, 128);
+            var caption = window.PointToScreen(new Point(window.ActualWidth / 2, -15));
+            Assert.True(SetCursorPos((int)caption.X, (int)caption.Y));
+            await Task.Delay(75);
+            AssertNativeAlpha(window, 255);
+            Assert.True(SetCursorPos((int)SystemParameters.WorkArea.Left + 1, (int)SystemParameters.WorkArea.Bottom - 1));
+            await Task.Delay(75);
+            AssertNativeAlpha(window, 128);
+        }
+        finally { SetCursorPos(original.X, original.Y); }
+    }
+
+    private static async Task CheckDesktopTransparencyAsync(Window window)
+    {
+        Assert.True(GetCursorPos(out var original));
+        try
+        {
+            window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                { RoutedEvent = Mouse.PreviewMouseDownEvent });
+            Keyboard.ClearFocus();
+            Assert.True(SetCursorPos((int)SystemParameters.WorkArea.Left + 1, (int)SystemParameters.WorkArea.Bottom - 1));
+            await Task.Delay(75);
+            var backdrop = new Window
+            {
+                Left = window.Left, Top = window.Top, Width = window.ActualWidth, Height = window.ActualHeight,
+                WindowStyle = WindowStyle.None, ShowInTaskbar = false, Background = Brushes.Red, Topmost = true,
+            };
+            var previousOwner = window.Owner;
+            try
+            {
+                backdrop.Show();
+                window.Owner = backdrop;
+                window.Activate();
+                await Task.Delay(100);
+                var sample = window.PointToScreen(new Point(30, 60));
+                AssertNativeAlpha(window, 128);
+                Assert.True(WindowBounds(backdrop).Contains(sample), $"Backdrop {WindowBounds(backdrop)}, sample {sample}");
+                var red = CapturePixel(sample);
+                backdrop.Background = Brushes.Blue;
+                await Task.Delay(100);
+                AssertNativeAlpha(window, 128);
+                var blue = CapturePixel(sample);
+                Assert.True(red.R - blue.R >= 70 && blue.B - red.B >= 70,
+                    $"Desktop behind the overlay must remain visible: red backdrop {red}, blue backdrop {blue}");
+                var bounds = WindowBounds(window);
+                using var bitmap = new System.Drawing.Bitmap((int)bounds.Width, (int)bounds.Height);
+                using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+                graphics.CopyFromScreen((int)bounds.Left, (int)bounds.Top, 0, 0, bitmap.Size);
+                bitmap.Save(Path.Combine(AppContext.BaseDirectory, "overlay-native-transparent-50.png"));
+            }
+            finally { window.Owner = previousOwner; backdrop.Close(); window.Activate(); }
         }
         finally { SetCursorPos(original.X, original.Y); }
     }
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out CursorPoint point);
+
+    private static System.Drawing.Color CapturePixel(Point point)
+    {
+        using var bitmap = new System.Drawing.Bitmap(1, 1);
+        using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+        graphics.CopyFromScreen((int)point.X, (int)point.Y, 0, 0, bitmap.Size);
+        return bitmap.GetPixel(0, 0);
+    }
+
+    private static void AssertNativeAlpha(Window window, byte expected)
+    {
+        Assert.True(GetLayeredWindowAttributes(new System.Windows.Interop.WindowInteropHelper(window).Handle,
+            out _, out var alpha, out var flags));
+        Assert.Equal(2u, flags & 2);
+        Assert.Equal(expected, alpha);
+        Assert.Equal(1, window.Opacity);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLayeredWindowAttributes(IntPtr handle, out uint color, out byte alpha, out uint flags);
 
     [DllImport("user32.dll")]
     private static extern bool SetCursorPos(int x, int y);

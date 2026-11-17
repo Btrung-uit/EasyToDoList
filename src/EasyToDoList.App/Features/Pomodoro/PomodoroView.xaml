@@ -3,15 +3,38 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
  <StackPanel MaxWidth="420">
   <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Nhịp Pomodoro"/>
-  <TextBlock Margin="0,12,0,8" Text="Chọn nhịp tập trung / nghỉ ngắn (phút)" TextWrapping="Wrap"/>
-  <UniformGrid Columns="3">
-   <Button Margin="0,0,4,0" Content="25/5" Command="{Binding SelectPresetCommand}" CommandParameter="25/5" Style="{StaticResource GuildButtonStyle}" AutomationProperties.Name="25 phút tập trung, 5 phút nghỉ"/>
-   <Button Margin="4,0" Content="45/10" Command="{Binding SelectPresetCommand}" CommandParameter="45/10" Style="{StaticResource GuildButtonStyle}" AutomationProperties.Name="45 phút tập trung, 10 phút nghỉ"/>
-   <Button Margin="4,0,0,0" Content="50/10" Command="{Binding SelectPresetCommand}" CommandParameter="50/10" Style="{StaticResource GuildButtonStyle}" AutomationProperties.Name="50 phút tập trung, 10 phút nghỉ"/>
+  <UniformGrid Columns="3" Margin="0,12,0,16">
+   <Button Margin="0,0,4,0" Content="25/5" Command="{Binding SelectPresetCommand}" CommandParameter="25/5" AutomationProperties.Name="25 phút tập trung, 5 phút nghỉ">
+    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource GuildButtonStyle}">
+     <Style.Triggers><DataTrigger Binding="{Binding SelectedPreset}" Value="25/5">
+      <Setter Property="Background" Value="{StaticResource GuildGoldBrush}"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="AutomationProperties.ItemStatus" Value="Đang chọn"/>
+     </DataTrigger></Style.Triggers>
+    </Style></Button.Style>
+   </Button>
+   <Button Margin="4,0" Content="45/10" Command="{Binding SelectPresetCommand}" CommandParameter="45/10" AutomationProperties.Name="45 phút tập trung, 10 phút nghỉ">
+    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource GuildButtonStyle}">
+     <Style.Triggers><DataTrigger Binding="{Binding SelectedPreset}" Value="45/10">
+      <Setter Property="Background" Value="{StaticResource GuildGoldBrush}"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="AutomationProperties.ItemStatus" Value="Đang chọn"/>
+     </DataTrigger></Style.Triggers>
+    </Style></Button.Style>
+   </Button>
+   <Button Margin="4,0,0,0" Content="50/10" Command="{Binding SelectPresetCommand}" CommandParameter="50/10" AutomationProperties.Name="50 phút tập trung, 10 phút nghỉ">
+    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource GuildButtonStyle}">
+     <Style.Triggers><DataTrigger Binding="{Binding SelectedPreset}" Value="50/10">
+      <Setter Property="Background" Value="{StaticResource GuildGoldBrush}"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="AutomationProperties.ItemStatus" Value="Đang chọn"/>
+     </DataTrigger></Style.Triggers>
+    </Style></Button.Style>
+   </Button>
   </UniformGrid>
-  <TextBlock Margin="0,10,0,16" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite">
-   <TextBlock.Text><MultiBinding StringFormat="Đang chọn: {0} phút tập trung / {1} phút nghỉ"><Binding Path="FocusMinutes"/><Binding Path="ShortBreakMinutes"/></MultiBinding></TextBlock.Text>
-  </TextBlock>
   <Expander Header="Cài đặt nâng cao" AutomationProperties.Name="Cài đặt nâng cao Pomodoro">
    <StackPanel>
     <TextBlock Margin="0,12,0,4" Text="Tập trung (15–60 phút)"/>

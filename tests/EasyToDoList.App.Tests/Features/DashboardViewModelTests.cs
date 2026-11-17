@@ -24,7 +24,21 @@ public sealed class DashboardViewModelTests
         Assert.Equal(rest, configuration.ShortBreakMinutes);
         Assert.Equal(longRest, configuration.LongBreakMinutes);
         Assert.Equal(4, configuration.LongBreakInterval);
+        Assert.Equal(preset, vm.SelectedPreset);
         Assert.Null(vm.ValidationMessage);
+    }
+
+    [Fact]
+    public void Custom_focus_or_break_clears_preset_match_and_restoring_values_reselects_it()
+    {
+        var vm = new PomodoroViewModel();
+        Assert.Equal("25/5", vm.SelectedPreset);
+        vm.FocusMinutes = 40;
+        Assert.Equal("40/5", vm.SelectedPreset);
+        vm.FocusMinutes = 25;
+        Assert.Equal("25/5", vm.SelectedPreset);
+        vm.ShortBreakMinutes = 6;
+        Assert.Equal("25/6", vm.SelectedPreset);
     }
 
     [Fact]

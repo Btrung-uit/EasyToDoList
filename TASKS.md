@@ -352,8 +352,8 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [x] Feedback hoàn thành/EXP/coin/Hoàn tác nằm trong một toast góc dưới bên phải, không chiếm hàng layout hoặc làm xuất hiện scrollbar của Dashboard; Overlay chừa nút điều hướng.
 - [x] Hoàn tác vẫn có hạn 5 giây và đảo ledger đúng một lần; complete thất bại giữ nguyên form sửa.
 - [x] Regression SQLite tái hiện Sửa → Xong/Hủy → Lưu cùng tên hoặc tên khác; kiểm tra WPF đo bốn ô, viewport, vị trí toast và keyboard Undo.
-- [x] Overlay rộng tối đa 320 DIP, tự co chiều cao theo nội dung; danh sách dài chỉ cuộn bên trong.
-- [x] Overlay trong mờ 60% mặc định; rõ khi hover hoặc có focus bàn phím. Pomodoro chỉ hiện Bắt đầu / Tạm dừng+Bỏ qua / Tiếp tục+Dừng theo trạng thái.
+- [x] Overlay rộng tối đa 280 DIP, tự co chiều cao theo nội dung; giảm padding/khoảng cách, danh sách dài chỉ cuộn bên trong. Pomodoro dưới 240 DIP khi không có lỗi; hàng báo lỗi rỗng không chiếm chỗ.
+- [x] Overlay xuyên thấu 50% bằng native window alpha, gồm thanh tiêu đề; rõ khi hover hoặc dùng bàn phím. Focus từ nút bấm chuột không ngăn mờ lại khi rời cửa sổ. Pomodoro chỉ hiện Bắt đầu / Tạm dừng+Bỏ qua / Tiếp tục+Dừng theo trạng thái.
 - [x] Footer Overlay chỉ còn Mở Dashboard và Ẩn; X vẫn ẩn vào tray theo lựa chọn của người dùng. Thoát hẳn qua tray → Exit.
 - [x] Feedback Overlay là popup ngoài cửa sổ, không tăng chiều cao hoặc che nút; dùng cùng nội dung với toast Dashboard. Popup theo cửa sổ khi kéo, tự đổi phía ở mép dưới, đóng khi chuyển Dashboard/ẩn tray/hết hạn Hoàn tác. Smoke script M10 dùng tray Exit thay nút Thoát đã bỏ.
 - [x] Chuyển Dashboard ↔ Overlay lưu/khôi phục vị trí, kích thước và trạng thái phóng to riêng của Dashboard; Overlay luôn về Normal. Không có bounds cũ thì Dashboard mở giữa màn hình; chuyển qua tray hoặc lặp nhiều lần vẫn giữ bounds. Chặn lưu/clamp tọa độ trung gian khi đang chuyển chế độ.
@@ -361,8 +361,10 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [x] Ẩn phần thưởng sớm khi bằng 0; vẫn hiển thị bonus dương và tổng EXP/coin.
 - [x] Bỏ trang Hồ sơ và bảng lịch sử nhận EXP/coin khỏi UI; giữ thông tin tiến trình bên phải và ledger phục vụ thưởng/Hoàn tác, không xóa dữ liệu.
 - [x] Pomodoro mặc định hiển thị preset 25/5, 45/10, 50/10; chi tiết nằm trong Cài đặt nâng cao, đóng sẵn. Preset đặt nghỉ dài lần lượt 20/20/25 phút sau 4 phiên; cấu hình nâng cao giữ validation hiện có, áp dụng cho phiên bắt đầu tiếp theo.
+- [x] Bỏ hai dòng mô tả preset; lựa chọn hiện tại có nền vàng, viền đậm và trạng thái accessibility. Chỉnh focus/nghỉ ngắn trong nâng cao cập nhật lựa chọn tương ứng.
+- [x] Header bỏ nút Overlay/Thoát; nút Thu gọn thành Overlay ở cột phải thay Mở đồng hồ. Bỏ nhãn phase/status khỏi sidebar và Overlay; tên accessibility của đồng hồ giữ phase cùng thời gian còn lại. X vẫn ẩn tray; thoát hẳn qua tray → Exit.
 
-Kiểm chứng: 221/221 tests pass; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật, focus bàn phím, các trạng thái nút, preset và đóng/mở nâng cao; popup ngoài HWND Overlay, theo khi kéo, tránh mép dưới, dự phòng trái/phải khi thiếu chỗ trên/dưới, đóng khi ẩn và đổi chế độ. Kiểm tra binding/accessibility và ảnh UI không có lỗi. Vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP; máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
+Kiểm chứng: 222/222 tests pass; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật ở client và thanh tiêu đề, focus bàn phím, các trạng thái nút, preset và đóng/mở nâng cao; native alpha 128/255 và pixel màn hình khi thay nền đỏ/xanh chứng minh xuyên thấu thật. Popup ngoài HWND Overlay, theo khi kéo, tránh mép dưới, dự phòng trái/phải khi thiếu chỗ trên/dưới, đóng khi ẩn và đổi chế độ. Binding/accessibility và ảnh UI không có lỗi. Smoke script M10 đã đổi locator theo UI mới và kiểm tra cú pháp; không chạy lại trên dữ liệu cá nhân. Vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP; máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
 
 ## Sau MVP — chưa thực hiện
 

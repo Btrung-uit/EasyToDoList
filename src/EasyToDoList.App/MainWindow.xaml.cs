@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls.Primitives;
@@ -19,6 +21,11 @@ public partial class MainWindow : Window
     private readonly CompletionSound _pomodoroSound = new();
     private PomodoroSnapshot? _lastAudioSnapshot;
     private bool _exitRequested;
+    private IntPtr _windowHandle;
+    private HwndSource? _windowSource;
+    private byte? _windowAlpha;
+    private bool _keyboardInteraction;
+    private bool _nonClientMouseOver;
 
     public MainWindow(ShellViewModel viewModel)
     {
@@ -53,6 +60,72 @@ public partial class MainWindow : Window
         _feedbackTimer.Start();
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        _windowHandle = new WindowInteropHelper(this).Handle;
+        _windowSource = HwndSource.FromHwnd(_windowHandle);
+        _windowSource.AddHook(OnWindowMessage);
+        SetWindowLong(_windowHandle, -20, GetWindowLong(_windowHandle, -20) | 0x80000);
+        UpdateTransparency();
+    }
+
+    private IntPtr OnWindowMessage(IntPtr handle, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message == 0x7C && wParam.ToInt32() == -20) // WM_STYLECHANGING, GWL_EXSTYLE
+        {
+            // HwndTarget otherwise strips WS_EX_LAYERED from windows with native title bars.
+            Marshal.WriteInt32(lParam, 4, Marshal.ReadInt32(lParam, 4) | 0x80000);
+            handled = true;
+        }
+        else if (message == 0xA0 && !_nonClientMouseOver) // WM_NCMOUSEMOVE
+        {
+            var tracking = new MouseTracking { Size = (uint)Marshal.SizeOf<MouseTracking>(), Flags = 0x12, Handle = handle };
+            if (!TrackMouseEvent(ref tracking)) throw new Win32Exception(Marshal.GetLastWin32Error());
+            _nonClientMouseOver = true;
+            UpdateTransparency();
+        }
+        else if (message == 0x2A2 || message is 0xA1 or 0xA4) // non-client leave / mouse down
+        {
+            if (message == 0x2A2) _nonClientMouseOver = false;
+            else _keyboardInteraction = false;
+            UpdateTransparency();
+        }
+        return IntPtr.Zero;
+    }
+
+    protected override void OnActivated(EventArgs e) { base.OnActivated(e); UpdateTransparency(); }
+    protected override void OnDeactivated(EventArgs e) { base.OnDeactivated(e); UpdateTransparency(); }
+
+    private void OnWindowInteractionChanged(object sender, MouseEventArgs e) => UpdateTransparency();
+    private void OnFocusChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdateTransparency();
+    private void OnKeyboardInteraction(object sender, KeyEventArgs e) { _keyboardInteraction = true; UpdateTransparency(); }
+    private void OnMouseInteraction(object sender, MouseButtonEventArgs e) { _keyboardInteraction = false; UpdateTransparency(); }
+
+    private void UpdateTransparency()
+    {
+        if (_windowHandle == IntPtr.Zero || _viewModel is null) return;
+        var feedback = OverlayFeedbackPopup.Child;
+        var interacting = IsMouseOver || _nonClientMouseOver || feedback.IsMouseOver
+            || (_keyboardInteraction && IsActive && (IsKeyboardFocusWithin || feedback.IsKeyboardFocusWithin));
+        var alpha = (byte)(_viewModel.DisplayMode == ShellDisplayMode.Overlay && !interacting ? 128 : 255);
+        if (_windowAlpha == alpha) return;
+        // Native alpha makes the desktop visible through the HWND, including its title bar.
+        if (!SetLayeredWindowAttributes(_windowHandle, 0, alpha, 2)) throw new Win32Exception(Marshal.GetLastWin32Error());
+        _windowAlpha = alpha;
+    }
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+    private static extern int GetWindowLong(IntPtr handle, int index);
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
+    private static extern int SetWindowLong(IntPtr handle, int index, int value);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetLayeredWindowAttributes(IntPtr handle, uint color, byte alpha, uint flags);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool TrackMouseEvent(ref MouseTracking tracking);
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MouseTracking { public uint Size; public uint Flags; public IntPtr Handle; public uint HoverTime; }
+
     private void OnFeedbackTimerTick(object? sender, EventArgs e) => _viewModel.Dashboard?.Today.RefreshFeedback();
 
     private void OnCompletionCommitted(object? sender, EventArgs e)
@@ -83,11 +156,13 @@ public partial class MainWindow : Window
     {
         if (e.PropertyName == nameof(ShellViewModel.DisplayMode))
         {
+            _nonClientMouseOver = false;
             UpdateScene();
             _modeController.Apply(
                 _viewModel.DisplayMode,
                 _viewModel.Dashboard?.Settings.OverlayLeft,
                 _viewModel.Dashboard?.Settings.OverlayTop);
+            UpdateTransparency();
         }
     }
 
@@ -186,6 +261,8 @@ public partial class MainWindow : Window
 
     private void OnClosed(object? sender, EventArgs e)
     {
+        _windowSource?.RemoveHook(OnWindowMessage);
+        _windowHandle = IntPtr.Zero;
         _overlayTimer.Stop();
         _feedbackTimer.Stop();
         _feedbackTimer.Tick -= OnFeedbackTimerTick;

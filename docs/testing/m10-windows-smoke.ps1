@@ -221,19 +221,20 @@ try {
     $toggle = $box.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
     Assert-That (($toggle.Current.ToggleState -eq [System.Windows.Automation.ToggleState]::On) -eq $exitEnabled) 'Auto-start must persist across restart.'
     $toggle.Toggle()
-    Invoke-Element (Find-Name (Get-AppWindow) 'Thoát')
-    Assert-That ($primary.WaitForExit(15000)) 'Dashboard Exit must terminate the process.'
+    $menu = Open-TrayMenu
+    Invoke-Element (Find-Name $menu 'Exit')
+    Assert-That ($primary.WaitForExit(15000)) 'Tray Exit must terminate the process.'
     $runValue = (Get-ItemProperty -LiteralPath $runPath -Name EasyToDoList -ErrorAction SilentlyContinue).EasyToDoList
-    Assert-That (($originalAutoStart -and $runValue -eq ('"' + $Executable + '" --tray')) -or (-not $originalAutoStart -and $null -eq $runValue)) 'Dashboard Exit must restore original auto-start setting.'
+    Assert-That (($originalAutoStart -and $runValue -eq ('"' + $Executable + '" --tray')) -or (-not $originalAutoStart -and $null -eq $runValue)) 'Tray Exit must restore original auto-start setting.'
     $settingsNeedRestore = $false
-    Record-Pass 'Dashboard Exit terminates the executable'
-    Record-Pass 'Dashboard Exit persists opposite auto-start change and restores original setting'
+    Record-Pass 'Tray Exit terminates the executable'
+    Record-Pass 'Tray Exit persists opposite auto-start change and restores original setting'
 
     $window = Start-App
-    Invoke-Element (Find-Name $window 'Mở đồng hồ')
+    Invoke-Element (Find-Name $window 'Thu gọn thành Overlay')
     $window = Wait-Until { $w = Get-AppWindow; if ($w -and $w.Current.Name -like '*Overlay*') { $w } } 'Pomodoro Overlay'
     Invoke-Element (Find-Name $window 'Bắt đầu')
-    [void](Wait-Until { Find-Name (Get-AppWindow) 'Đang chạy' } 'Focus is running')
+    [void](Wait-Until { Find-Name (Get-AppWindow) 'Tạm dừng' } 'Focus is running')
     $newRows = @(Get-PomodoroRows | Where-Object { $_.Id -notin $originalSessions.Id })
     Assert-That ($newRows.Count -eq 1) 'Exactly one test session must have been created.'
     Assert-That ($newRows[0].Id -is [string]) 'Test session must have one scalar identifier.'
@@ -246,8 +247,8 @@ try {
     Assert-That ($paused.Status -eq 1 -and $paused.RemainingSeconds -gt 0) 'Focus Exit must persist Paused with remaining time.'
     Record-Pass 'Exit while Focus is running pauses and terminates the executable'
     $window = Start-App
-    Invoke-Element (Find-Name $window 'Mở đồng hồ')
-    [void](Wait-Until { Find-Name (Get-AppWindow) 'Đã tạm dừng' } 'restart shows Paused')
+    Invoke-Element (Find-Name $window 'Thu gọn thành Overlay')
+    [void](Wait-Until { Find-Name (Get-AppWindow) 'Tiếp tục' } 'restart shows Paused')
     $reopened = Get-PomodoroRows | Where-Object { $_.Id -eq $testSessionId }
     Assert-That ($reopened.RemainingSeconds -eq $paused.RemainingSeconds) 'Restart must preserve paused time.'
     $menu = Open-TrayMenu
@@ -291,7 +292,8 @@ finally {
                         Invoke-Element (Find-Name $window 'Lưu cài đặt')
                     }
                     }
-                    Invoke-Element (Find-Name $window 'Thoát')
+                    $menu = Open-TrayMenu
+                    Invoke-Element (Find-Name $menu 'Exit')
                     [void]$owned.WaitForExit(5000)
                 }
             }

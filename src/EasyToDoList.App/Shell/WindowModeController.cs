@@ -47,12 +47,12 @@ public sealed class WindowModeController(Window window)
             var dashboard = _dashboardBounds ?? new Rect(
                 workArea.Left + (workArea.Width - defaultWidth) / 2,
                 workArea.Top + (workArea.Height - defaultHeight) / 2, defaultWidth, defaultHeight);
-            var width = isOverlay ? Math.Min(320, workArea.Width) : Math.Min(dashboard.Width, workArea.Width);
+            var width = isOverlay ? Math.Min(280, workArea.Width) : Math.Min(dashboard.Width, workArea.Width);
             var height = isOverlay ? Math.Min(300, workArea.Height - 32) : Math.Min(dashboard.Height, workArea.Height);
             window.Topmost = isOverlay;
             window.ResizeMode = isOverlay ? ResizeMode.NoResize : ResizeMode.CanResizeWithGrip;
             window.MinWidth = isOverlay ? width : Math.Min(900, width);
-            window.MinHeight = isOverlay ? Math.Min(160, height) : Math.Min(600, height);
+            window.MinHeight = isOverlay ? Math.Min(120, height) : Math.Min(600, height);
             window.MaxHeight = isOverlay ? workArea.Height - 32 : double.PositiveInfinity;
             window.Width = width;
             window.Height = height;

@@ -19,8 +19,9 @@ public sealed class PomodoroViewModel : ViewModelBase
         SelectPresetCommand = new RelayCommand(SelectPreset);
     }
 
-    public int FocusMinutes { get => _focusMinutes; set => SetField(ref _focusMinutes, value); }
-    public int ShortBreakMinutes { get => _shortBreakMinutes; set => SetField(ref _shortBreakMinutes, value); }
+    public int FocusMinutes { get => _focusMinutes; set { if (SetField(ref _focusMinutes, value)) OnPropertyChanged(nameof(SelectedPreset)); } }
+    public int ShortBreakMinutes { get => _shortBreakMinutes; set { if (SetField(ref _shortBreakMinutes, value)) OnPropertyChanged(nameof(SelectedPreset)); } }
+    public string SelectedPreset => $"{FocusMinutes}/{ShortBreakMinutes}";
     public int LongBreakMinutes { get => _longBreakMinutes; set => SetField(ref _longBreakMinutes, value); }
     public int LongBreakInterval { get => _longBreakInterval; set => SetField(ref _longBreakInterval, value); }
     public string? ValidationMessage { get => _validationMessage; private set => SetField(ref _validationMessage, value); }
