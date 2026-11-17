@@ -32,9 +32,11 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
-| M10 | Windows lifecycle, tray, notification và startup | Chưa bắt đầu | M04, M05, M06 |
-| M11 | Accessibility, visual polish và asset integration | Chưa bắt đầu | M07–M10 |
+| M10 | Windows lifecycle, tray, notification và startup | Đã triển khai; chờ kiểm thử Windows thủ công | M04, M05, M06 |
+| M11 | Accessibility, visual polish và asset integration | Đã triển khai; chờ kiểm thử visual/accessibility thủ công | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
+
+Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
 
 ---
 
@@ -267,23 +269,27 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] System tray menu: Overlay, Dashboard, Exit.
-- [ ] Single-instance; instance thứ hai focus instance hiện có rồi thoát.
-- [ ] Sleep/Exit pause Pomodoro trước khi shutdown.
-- [ ] Resume chạy reconciliation.
-- [ ] Notification cho Pomodoro end, due và Overdue.
-- [ ] Notification chỉ hoạt động khi process còn sống.
-- [ ] Auto-start setting.
-- [ ] Local rolling log không ghi nội dung To-do không cần thiết.
+- [x] System tray menu: Overlay, Dashboard, Exit.
+- [x] Single-instance; instance thứ hai focus instance hiện có rồi thoát.
+- [x] Sleep/Exit pause Pomodoro trước khi shutdown.
+- [x] Resume chạy reconciliation.
+- [x] Notification cho Pomodoro end, due và Overdue.
+- [x] Notification chỉ hoạt động khi process còn sống.
+- [x] Auto-start setting.
+- [x] Local rolling log không ghi nội dung To-do không cần thiết.
 
 ### Hoàn thành khi
 
-- [ ] Startup order: migration → recovery → reconciliation → UI.
-- [ ] Tray vẫn giữ timer/notification chạy.
-- [ ] Exit không để background process.
+- [x] Startup order: migration → recovery → reconciliation → UI.
+- [x] Tray vẫn giữ timer/notification chạy.
+- [x] Exit không để background process.
 - [ ] Manual test sleep/resume, tray và notification trên Windows 11 pass.
-- [ ] `dotnet build -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: integrate Windows lifecycle and notifications`.
+- [x] `dotnet build -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: integrate Windows lifecycle and notifications`.
+
+Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không có warning/error. Kiểm thử tự động đã bao phủ SQLite thật, pause/resume, midnight, notification settings/deduplication, IPC single-instance, rolling log và WPF dispatcher/tray. Chưa đánh dấu hoàn thành M10: còn checklist [Windows thủ công](docs/testing/m10-windows-checklist.md). Smoke chạy app riêng đã dừng trước khi launch vì máy đang có một instance EasyToDoList khác; không đóng hoặc thay đổi instance đó. Forced Windows shutdown dùng crash recovery từ checkpoint tối đa khoảng 30 giây; explicit Exit lưu trạng thái trước khi đóng.
+
+Đối chiếu 17/11/2026: 14/14 kiểm tra executable Release thật pass trên Windows 11, gồm tray/double-click, single-instance hidden/minimized và foreground, auto-start qua Save/Exit, `--tray`, Exit khi Focus đang chạy và mở lại Paused giữ nguyên thời gian. Full suite 211/211 tests pass; build warnings-as-errors 0 warning/error. Không còn process sau smoke; record kiểm thử đã dọn riêng và auto-start đã khôi phục. Sleep/Resume và đăng xuất/đăng nhập được người dùng chọn kiểm thử sau. Thông báo đến hạn đã xác nhận bằng ảnh chụp banner Windows thật (UI Automation ban đầu bỏ sót). Chưa xác nhận chạy hết Focus trong tray hoặc qua midnight thật, nên M10 vẫn chưa đóng. Xem checklist để phân biệt proof thật và clock giả.
 
 ## M11 — Accessibility, visual polish và asset integration
 
@@ -291,25 +297,27 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 ### Phạm vi
 
-- [ ] Tích hợp normalized mascot frames `320×320`.
-- [ ] Idle/Focus/Celebrate/Rest đúng trạng thái.
-- [ ] Cloud translate, flag 6 fps, grass 4 fps và lá rơi thưa.
-- [ ] Reduced Motion dừng ambient và dùng frame `00`.
-- [ ] Nearest-neighbor scaling, không blur pixel-art.
+- [x] Tích hợp normalized mascot frames `320×320`.
+- [x] Idle/Focus/Celebrate/Rest đúng trạng thái.
+- [x] Cloud translate, flag 6 fps, grass 4 fps và lá rơi thưa.
+- [x] Reduced Motion dừng ambient và dùng frame `00`.
+- [x] Nearest-neighbor scaling, không blur pixel-art.
 - [ ] Kiểm tra 100%/150%/200% DPI.
-- [ ] Hoàn thiện tab order, focus visual, accessible name và contrast.
-- [ ] Thông tin không phụ thuộc duy nhất vào màu/âm thanh/animation.
-- [ ] Thay placeholder audio bằng bộ asset có quyền sử dụng rõ ràng.
-- [ ] Ghi nguồn/license cho asset phát hành.
+- [x] Hoàn thiện tab order, focus visual, accessible name và contrast.
+- [x] Thông tin không phụ thuộc duy nhất vào màu/âm thanh/animation.
+- [x] Thay placeholder audio bằng bộ asset có quyền sử dụng rõ ràng.
+- [x] Ghi nguồn/license cho asset phát hành.
 
 ### Hoàn thành khi
 
 - [ ] Mascot/cờ/cỏ không trượt pivot khi loop trong WPF thật.
 - [ ] Animation không làm UI thread giật hoặc tăng CPU bất hợp lý.
-- [ ] Reduced Motion và muted mode vẫn dùng đủ chức năng.
+- [x] Reduced Motion và muted mode vẫn dùng đủ chức năng.
 - [ ] Manual visual/accessibility checklist pass.
-- [ ] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
-- [ ] Commit: `feat: finish medieval visual and accessibility pass`.
+- [x] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
+- [x] Commit: `feat: finish medieval visual and accessibility pass`.
+
+Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Không đánh dấu hoàn thành M11 trước khi các kiểm tra thủ công pass.
 
 ## M12 — Installer và release verification
 
@@ -336,6 +344,29 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 - [ ] Commit: `feat: package EasyToDoList MVP`.
 
 ---
+
+## Sửa lỗi sau kiểm thử người dùng — 17/11/2026
+
+- [x] Tên nhiệm vụ, ngày bắt đầu, hạn chót và Lưu có cùng chiều rộng và cao 40 DIP.
+- [x] Hoàn thành nhiệm vụ đang sửa đưa form về tạo mới; reload bỏ trạng thái sửa nếu nhiệm vụ đã đóng, không làm mất bản nháp của nhiệm vụ khác.
+- [x] Feedback hoàn thành/EXP/coin/Hoàn tác nằm trong một toast góc dưới bên phải, không chiếm hàng layout hoặc làm xuất hiện scrollbar của Dashboard; Overlay chừa nút điều hướng.
+- [x] Hoàn tác vẫn có hạn 5 giây và đảo ledger đúng một lần; complete thất bại giữ nguyên form sửa.
+- [x] Regression SQLite tái hiện Sửa → Xong/Hủy → Lưu cùng tên hoặc tên khác; kiểm tra WPF đo bốn ô, viewport, vị trí toast và keyboard Undo.
+- [x] Overlay rộng tối đa 280 DIP, tự co chiều cao theo nội dung; giảm padding/khoảng cách, danh sách dài chỉ cuộn bên trong. Pomodoro dưới 240 DIP khi không có lỗi; hàng báo lỗi rỗng không chiếm chỗ.
+- [x] Overlay xuyên thấu 50% bằng native window alpha, gồm thanh tiêu đề; rõ khi hover hoặc dùng bàn phím. Focus từ nút bấm chuột không ngăn mờ lại khi rời cửa sổ. Pomodoro chỉ hiện Bắt đầu / Tạm dừng+Bỏ qua / Tiếp tục+Dừng theo trạng thái.
+- [x] Footer Overlay chỉ còn Mở Dashboard và Ẩn; X vẫn ẩn vào tray theo lựa chọn của người dùng. Thoát hẳn qua tray → Exit.
+- [x] Feedback Overlay là popup ngoài cửa sổ, không tăng chiều cao hoặc che nút; dùng cùng nội dung với toast Dashboard. Popup theo cửa sổ khi kéo, tự đổi phía ở mép dưới, đóng khi chuyển Dashboard/ẩn tray/hết hạn Hoàn tác. Smoke script M10 dùng tray Exit thay nút Thoát đã bỏ.
+- [x] Chuyển Dashboard ↔ Overlay lưu/khôi phục vị trí, kích thước và trạng thái phóng to riêng của Dashboard; Overlay luôn về Normal. Không có bounds cũ thì Dashboard mở giữa màn hình; chuyển qua tray hoặc lặp nhiều lần vẫn giữ bounds. Chặn lưu/clamp tọa độ trung gian khi đang chuyển chế độ.
+
+- [x] Ẩn phần thưởng sớm khi bằng 0; vẫn hiển thị bonus dương và tổng EXP/coin.
+- [x] Bỏ trang Hồ sơ và bảng lịch sử nhận EXP/coin khỏi UI; giữ thông tin tiến trình bên phải và ledger phục vụ thưởng/Hoàn tác, không xóa dữ liệu.
+- [x] Pomodoro mặc định hiển thị preset 25/5, 45/10, 50/10; chi tiết nằm trong Cài đặt nâng cao, đóng sẵn. Preset đặt nghỉ dài lần lượt 20/20/25 phút sau 4 phiên; cấu hình nâng cao giữ validation hiện có, áp dụng cho phiên bắt đầu tiếp theo.
+- [x] Bỏ hai dòng mô tả preset; lựa chọn hiện tại có nền vàng, viền đậm và trạng thái accessibility. Chỉnh focus/nghỉ ngắn trong nâng cao cập nhật lựa chọn tương ứng.
+- [x] Header bỏ nút Overlay/Thoát; nút Thu gọn thành Overlay ở cột phải thay Mở đồng hồ. Bỏ nhãn phase/status khỏi sidebar và Overlay; tên accessibility của đồng hồ giữ phase cùng thời gian còn lại. X vẫn ẩn tray; thoát hẳn qua tray → Exit.
+
+- [x] Regression CI dùng tọa độ Windows runner để phân biệt chạm mép với chồng lấn có diện tích; vẫn phát hiện chồng lấn 1 pixel.
+
+Kiểm chứng: 225/225 tests pass ở Debug và Release; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật ở client và thanh tiêu đề, focus bàn phím, các trạng thái nút, preset và đóng/mở nâng cao; native alpha 128/255 và pixel màn hình khi thay nền đỏ/xanh chứng minh xuyên thấu thật. Popup ngoài HWND Overlay, theo khi kéo, tránh mép dưới, dự phòng trái/phải khi thiếu chỗ trên/dưới, đóng khi ẩn và đổi chế độ. Binding/accessibility và ảnh UI không có lỗi. Smoke script M10 đã đổi locator theo UI mới và kiểm tra cú pháp; không chạy lại trên dữ liệu cá nhân. Vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP; máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
 
 ## Sau MVP — chưa thực hiện
 

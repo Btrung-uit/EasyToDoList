@@ -9,6 +9,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
 {
     private readonly IPomodoroService _service;
     private readonly Func<PomodoroConfiguration?> _configurationProvider;
+    private readonly bool _lifecycleOwnsTimer;
     private string _phaseLabel = "Sẵn sàng";
     private string _statusLabel = "Chưa bắt đầu";
     private string _timeText = "--:--";
@@ -18,10 +19,12 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
 
     public PomodoroOverlayViewModel(
         IPomodoroService service,
-        Func<PomodoroConfiguration?> configurationProvider)
+        Func<PomodoroConfiguration?> configurationProvider,
+        bool lifecycleOwnsTimer = false)
     {
         _service = service;
         _configurationProvider = configurationProvider;
+        _lifecycleOwnsTimer = lifecycleOwnsTimer;
         StartCommand = new AsyncRelayCommand(StartAsync);
         PauseCommand = new AsyncRelayCommand(PauseAsync);
         ResumeCommand = new AsyncRelayCommand(ResumeAsync);
@@ -39,6 +42,8 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
     public string? ErrorMessage { get => _errorMessage; private set => SetField(ref _errorMessage, value); }
     public bool HasSession => _snapshot is not null;
     public bool IsRunning => _snapshot?.Status == PomodoroStatus.Running;
+    public bool IsFocus => _snapshot?.Phase == PomodoroPhase.Focus;
+    internal PomodoroSnapshot? Snapshot => _snapshot;
     public bool IsPaused => _snapshot?.Status == PomodoroStatus.Paused;
     public bool IsAwaiting => _snapshot?.Status == PomodoroStatus.Awaiting;
     public bool CanStart => _snapshot is null || IsAwaiting;
@@ -82,7 +87,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
         var snapshot = _service.Current;
         try
         {
-            if (snapshot is { Status: PomodoroStatus.Running, RemainingSeconds: <= 0 })
+            if (!_lifecycleOwnsTimer && snapshot is { Status: PomodoroStatus.Running, RemainingSeconds: <= 0 })
             {
                 await _service.TickAsync(CancellationToken.None);
                 snapshot = _service.Current;
@@ -154,6 +159,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
             : $"{snapshot.RemainingSeconds / 60:00}:{snapshot.RemainingSeconds % 60:00}";
         OnPropertyChanged(nameof(HasSession));
         OnPropertyChanged(nameof(IsRunning));
+        OnPropertyChanged(nameof(IsFocus));
         OnPropertyChanged(nameof(IsPaused));
         OnPropertyChanged(nameof(IsAwaiting));
         OnPropertyChanged(nameof(CanStart));

@@ -4,7 +4,6 @@
              xmlns:today="clr-namespace:EasyToDoList.App.Features.Today"
              xmlns:calendar="clr-namespace:EasyToDoList.App.Features.Calendar"
              xmlns:pomodoro="clr-namespace:EasyToDoList.App.Features.Pomodoro"
-             xmlns:profile="clr-namespace:EasyToDoList.App.Features.Profile"
              xmlns:settings="clr-namespace:EasyToDoList.App.Features.Settings">
     <Application.Resources>
         <ResourceDictionary>
@@ -18,7 +17,6 @@
             <DataTemplate DataType="{x:Type today:TodayViewModel}"><today:TodayView /></DataTemplate>
             <DataTemplate DataType="{x:Type calendar:CalendarViewModel}"><calendar:CalendarView /></DataTemplate>
             <DataTemplate DataType="{x:Type pomodoro:PomodoroViewModel}"><pomodoro:PomodoroView /></DataTemplate>
-            <DataTemplate DataType="{x:Type profile:ProfileViewModel}"><profile:ProfileView /></DataTemplate>
             <DataTemplate DataType="{x:Type settings:SettingsViewModel}"><settings:SettingsView /></DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

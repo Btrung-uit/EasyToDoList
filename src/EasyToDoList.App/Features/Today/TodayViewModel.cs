@@ -54,7 +54,16 @@ public sealed class TodayViewModel : ViewModelBase
     public string ComboLabel => IsComboActive ? $"Combo ×{ComboCount} — Tuyệt lắm!" : "Hoàn thành!";
     public bool HasFeedback => Feedback.Count > 0;
     public bool MotionEnabled => _motionEnabled();
-    public string MascotFrame => $"/EasyToDoList.App;component/Assets/Celebrate/celebrate-{(MotionEnabled && HasCombo ? (int)Math.Max(0, (2 - (_comboUntil - _clock.UtcNow).TotalSeconds) * 8) % 6 : 0):00}.png";
+    public string MascotFrame
+    {
+        get
+        {
+            var elapsed = 2 - (_comboUntil - _clock.UtcNow).TotalSeconds;
+            var (state, frame) = SceneAnimation.Mascot("idle", elapsed, MotionEnabled && HasCombo, HasCombo ? 0 : null);
+            if (state == "idle") frame = 0;
+            return $"/EasyToDoList.App;component/Assets/Mascots/{state}/{state}-{frame:00}.png";
+        }
+    }
     public ICommand UndoCommand { get; }
     public string Title { get => _title; set => SetField(ref _title, value); }
     public DateTime? StartDate { get => _startDate; set => SetField(ref _startDate, value); }
@@ -79,6 +88,7 @@ public sealed class TodayViewModel : ViewModelBase
         {
             var items = await ReadAsync(() => _service.GetTodayAsync(_clock.LocalToday, CancellationToken.None));
             var ids = items.Select(x => x.Id).ToHashSet();
+            if (_editingId is Guid editingId && !ids.Contains(editingId)) ResetForm();
             foreach (var old in Items.Where(x => !ids.Contains(x.Id) && !x.IsCompleting).ToArray()) Items.Remove(old);
             foreach (var item in items)
             {
@@ -151,6 +161,7 @@ public sealed class TodayViewModel : ViewModelBase
             TodoCompletionResult result;
             try { result = await ReadAsync(() => _service.CompleteAsync(row.Id, CancellationToken.None)); }
             catch (Exception) { ErrorMessage = "Không thể hoàn thành nhiệm vụ. Hãy thử lại."; return; }
+            if (_editingId == row.Id) ResetForm();
             RefreshFeedback();
             if (ComboCount == 0) _comboGeneration++;
             ComboCount++;

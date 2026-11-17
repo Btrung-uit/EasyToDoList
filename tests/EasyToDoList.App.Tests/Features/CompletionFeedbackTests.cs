@@ -7,6 +7,30 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class CompletionFeedbackTests
 {
+    [Theory]
+    [InlineData(0, "+38 EXP, +6 coin")]
+    [InlineData(13, "+38 EXP (sớm +13), +6 coin")]
+    public async Task Reward_message_only_shows_positive_early_bonus(int bonus, string expected)
+    {
+        var (vm, _, _) = await CreateAsync();
+        await vm.CompleteAsync(vm.Items[0]);
+        var feedback = Assert.Single(vm.Feedback);
+        feedback = feedback with { Result = feedback.Result with { EarlyBonusExperience = bonus } };
+        Assert.Equal(expected, feedback.CompactMessage);
+        Assert.Equal($"One: {expected}", feedback.Message);
+    }
+
+    [Fact]
+    public async Task Mascot_celebrates_at_ten_fps_once_then_returns_to_idle()
+    {
+        var (vm, _, clock) = await CreateAsync();
+        await vm.CompleteAsync(vm.Items[0]);
+        clock.Advance(350);
+        Assert.EndsWith("Mascots/celebrate/celebrate-03.png", vm.MascotFrame);
+        clock.Advance(300);
+        Assert.EndsWith("Mascots/idle/idle-00.png", vm.MascotFrame);
+    }
+
     [Fact]
     public async Task Pending_completion_disables_only_its_own_row()
     {
@@ -27,6 +51,8 @@ public sealed class CompletionFeedbackTests
     {
         var (vm, service, _) = await CreateAsync();
         service.Pending = new TaskCompletionSource<TodoCompletionResult>();
+        vm.EditCommand.Execute(vm.Items[0]);
+        var editedTitle = vm.Title;
         var task = vm.CompleteAsync(vm.Items[0]);
         Assert.Empty(vm.Feedback);
         Assert.False(vm.Items[0].IsCompleting);
@@ -35,6 +61,8 @@ public sealed class CompletionFeedbackTests
         Assert.Empty(vm.Feedback);
         Assert.Equal(2, vm.Items.Count);
         Assert.NotNull(vm.ErrorMessage);
+        Assert.True(vm.IsEditing);
+        Assert.Equal(editedTitle, vm.Title);
     }
 
     [Fact]

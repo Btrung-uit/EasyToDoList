@@ -10,6 +10,7 @@ namespace EasyToDoList.App.Shell;
 public sealed class ShellViewModel : INotifyPropertyChanged
 {
     private readonly IPomodoroService _pomodoroService;
+    private readonly Func<Task>? _beforeExit;
     private ShellDisplayMode _displayMode = ShellDisplayMode.Dashboard;
     private OverlayMode _overlayMode = OverlayMode.Todo;
     private string? _exitErrorMessage;
@@ -17,9 +18,11 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     public ShellViewModel(
         IPomodoroService pomodoroService,
         DashboardViewModel? dashboard = null,
-        PomodoroOverlayViewModel? pomodoroOverlay = null)
+        PomodoroOverlayViewModel? pomodoroOverlay = null,
+        Func<Task>? beforeExit = null)
     {
         _pomodoroService = pomodoroService;
+        _beforeExit = beforeExit;
         Dashboard = dashboard;
         PomodoroOverlay = pomodoroOverlay;
         ShowDashboardCommand = new RelayCommand(_ => DisplayMode = ShellDisplayMode.Dashboard);
@@ -91,11 +94,12 @@ public sealed class ShellViewModel : INotifyPropertyChanged
             }
             catch (Exception)
             {
-                ExitErrorMessage = "Không thể lưu vị trí Overlay. Hãy thử thoát lại.";
+                ExitErrorMessage = "Không thể lưu cài đặt hoặc cập nhật khởi động cùng Windows. Hãy thử thoát lại.";
                 return;
             }
         }
 
+        if (_beforeExit is not null) await _beforeExit();
         ExitRequested?.Invoke(this, EventArgs.Empty);
     }
 
