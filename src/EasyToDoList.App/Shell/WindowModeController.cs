@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Forms;
 
 namespace EasyToDoList.App.Shell;
 
@@ -13,15 +15,18 @@ public sealed class WindowModeController(Window window)
         }
 
         var isOverlay = mode == ShellDisplayMode.Overlay;
-        var workArea = SystemParameters.WorkArea;
-        var width = isOverlay ? Math.Min(380, workArea.Width) : Math.Min(1180, Math.Max(640, workArea.Width - 32));
-        var height = isOverlay ? Math.Min(540, workArea.Height - 32) : Math.Min(760, Math.Max(480, workArea.Height - 32));
+        var workArea = GetWorkArea(window);
+        var width = isOverlay ? Math.Min(320, workArea.Width) : Math.Min(1180, Math.Max(640, workArea.Width - 32));
+        var height = isOverlay ? Math.Min(300, workArea.Height - 32) : Math.Min(760, Math.Max(480, workArea.Height - 32));
+        window.SizeToContent = SizeToContent.Manual;
         window.Topmost = isOverlay;
         window.ResizeMode = isOverlay ? ResizeMode.NoResize : ResizeMode.CanResizeWithGrip;
         window.MinWidth = isOverlay ? width : Math.Min(900, width);
-        window.MinHeight = isOverlay ? height : Math.Min(600, height);
+        window.MinHeight = isOverlay ? Math.Min(160, height) : Math.Min(600, height);
+        window.MaxHeight = isOverlay ? workArea.Height - 32 : double.PositiveInfinity;
         window.Width = width;
         window.Height = height;
+        window.SizeToContent = isOverlay ? SizeToContent.Height : SizeToContent.Manual;
         window.Title = isOverlay ? "EasyToDoList — Overlay" : "EasyToDoList — Hội quán nhiệm vụ";
 
         if (isOverlay)
@@ -40,5 +45,15 @@ public sealed class WindowModeController(Window window)
         {
             window.Show();
         }
+    }
+
+    internal static Rect GetWorkArea(Window window)
+    {
+        var source = PresentationSource.FromVisual(window);
+        if (source?.CompositionTarget is null) return SystemParameters.WorkArea;
+        var bounds = Screen.FromHandle(new WindowInteropHelper(window).Handle).WorkingArea;
+        var area = new Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        area.Transform(source.CompositionTarget.TransformFromDevice);
+        return area;
     }
 }

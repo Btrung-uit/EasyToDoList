@@ -41,6 +41,7 @@ public partial class MainWindow : Window
             viewModel.PomodoroOverlay.StopConfirmationRequested += OnStopConfirmationRequested;
         }
         LocationChanged += OnLocationChanged;
+        SizeChanged += OnWindowSizeChanged;
         Closed += OnClosed;
         _modeController.Apply(
             viewModel.DisplayMode,
@@ -113,6 +114,15 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_viewModel.DisplayMode != ShellDisplayMode.Overlay) return;
+        var area = WindowModeController.GetWorkArea(this);
+        MaxHeight = Math.Max(MinHeight, area.Height - 32);
+        Left = Math.Clamp(Left, area.Left, Math.Max(area.Left, area.Right - ActualWidth));
+        Top = Math.Clamp(Top, area.Top, Math.Max(area.Top, area.Bottom - ActualHeight));
+    }
+
     private async void OnOverlayTimerTick(object? sender, EventArgs e)
     {
         if (_viewModel.PomodoroOverlay?.RefreshCommand.CanExecute(null) == true)
@@ -161,6 +171,7 @@ public partial class MainWindow : Window
         _viewModel.ExitRequested -= OnExitRequested;
         _overlayTimer.Tick -= OnOverlayTimerTick;
         LocationChanged -= OnLocationChanged;
+        SizeChanged -= OnWindowSizeChanged;
         Closed -= OnClosed;
         if (_viewModel.PomodoroOverlay is not null)
         {

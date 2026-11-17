@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -136,26 +137,34 @@ public sealed class CompletionWpfTests
             Assert.Equal(viewportBeforeCompletion, dashboardScroll.ViewportHeight);
             Assert.Equal(scrollBeforeCompletion, dashboardScroll.ScrollableHeight);
             var root = (FrameworkElement)window.Content;
-            var toast = Assert.Single(Descendants<CompletionFeedbackView>(window));
+            var toast = Assert.Single(Descendants<CompletionFeedbackView>(window), view => view.IsVisible);
             var toastBounds = toast.TransformToAncestor(root).TransformBounds(new Rect(toast.RenderSize));
             Assert.InRange(root.ActualWidth - toastBounds.Right, 15, 17);
             Assert.InRange(root.ActualHeight - toastBounds.Bottom, 15, 17);
             SaveImage(window, "m09-dashboard.png");
             SaveImage(window, "todo-completion-toast-dashboard.png");
             Assert.Contains(Descendants<CompletionSurface>(window), x => x.Progress > 0);
-            var mascot = Descendants<Image>(window).Single(x => AutomationProperties.GetName(x).StartsWith("Hiệp sĩ"));
+            var mascot = Descendants<Image>(window).Single(x => x.IsVisible && AutomationProperties.GetName(x).StartsWith("Hiệp sĩ"));
             Assert.NotNull(mascot.Source);
 
             shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.True(window.Topmost);
+            Assert.True(window.ActualWidth <= 320);
+            Assert.True(window.ActualHeight < 360);
+            Assert.DoesNotContain(Descendants<Button>(window), button => button.IsVisible && Equals(button.Content, "Thoát"));
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
+            toast = Assert.Single(Descendants<CompletionFeedbackView>(window), view => view.IsVisible);
+            Assert.True(toast.IsCompact && toast.ActualHeight > 40);
+            await CheckOverlayOpacityAsync(window);
             var undo = Descendants<Button>(window).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
             Assert.True(undo.Focusable && undo.IsEnabled);
             Assert.NotEmpty(UIElementAutomationPeer.CreatePeerForElement(undo)!.GetName());
             window.Activate();
             Keyboard.Focus(undo);
             Assert.Equal(undo, Keyboard.FocusedElement);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal(1, window.Opacity);
             var dashboardButton = Descendants<Button>(window).Single(button => button.IsVisible && Equals(button.Content, "Mở Dashboard"));
             toastBounds = toast.TransformToAncestor(root).TransformBounds(new Rect(toast.RenderSize));
             Assert.False(toastBounds.IntersectsWith(dashboardButton.TransformToAncestor(root).TransformBounds(new Rect(dashboardButton.RenderSize))));
@@ -202,18 +211,46 @@ public sealed class CompletionWpfTests
             Assert.True(navigation.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next)));
             Assert.Equal("Lịch sử", Assert.IsType<Button>(Keyboard.FocusedElement).Content);
             var mascotScene = scenes.Single(scene => scene.MascotOnly);
+            shell.ShowOverlayCommand.Execute(OverlayMode.Pomodoro);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertPomodoroActions(window, "Bắt đầu");
+            clock.Advance(5001);
+            today.RefreshFeedback();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            SaveImage(window, "compact-pomodoro-ready.png");
+            var overlayFrame = (FrameworkElement)window.FindName("OverlayFrame");
+            Assert.True(window.ActualHeight < 320, $"Ready height {window.ActualHeight}; frame {overlayFrame.ActualHeight}/{overlayFrame.DesiredSize.Height}; sizing {window.SizeToContent}");
             await shell.PomodoroOverlay!.StartAsync();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertPomodoroActions(window, "Tạm dừng", "Bỏ qua");
+            SaveImage(window, "compact-pomodoro-running.png");
             Assert.Equal("focus", mascotScene.MascotState);
             await shell.PomodoroOverlay.PauseAsync();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertPomodoroActions(window, "Tiếp tục", "Dừng");
+            SaveImage(window, "compact-pomodoro-paused.png");
             Assert.Equal("idle", mascotScene.MascotState);
             await shell.PomodoroOverlay.ResumeAsync();
             clock.Advance(25 * 60 * 1000);
             await shell.PomodoroOverlay.RefreshAsync();
             Assert.True(shell.PomodoroOverlay.IsAwaiting);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertPomodoroActions(window, "Bắt đầu");
             await shell.PomodoroOverlay.StartAsync();
             Assert.Equal("rest", mascotScene.MascotState);
             await shell.PomodoroOverlay.ConfirmStopAsync();
             Assert.Equal("idle", mascotScene.MascotState);
+            shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
+            await today.CompleteAsync(Assert.Single(today.Items, row => !row.IsCompleting));
+            clock.Advance(5001);
+            today.RefreshFeedback();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(today.IsEmpty);
+            Assert.True(window.ActualHeight < 260);
+            Assert.True(WindowModeController.GetWorkArea(window).Contains(new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight)));
+            SaveImage(window, "compact-todo-empty.png");
+            shell.ShowDashboardCommand.Execute(null);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var longTitle = string.Concat(Enumerable.Repeat("Nhiệm vụ dài cần xuống dòng ", 6)).Trim();
             await service.CreateAsync(new CreateTodoCommand(longTitle, clock.LocalToday, clock.LocalToday), CancellationToken.None);
             for (var i = 0; i < 35; i++)
@@ -226,6 +263,12 @@ public sealed class CompletionWpfTests
             Assert.True(longText.ActualHeight > 30, "Long title should wrap onto multiple lines.");
             var listScroll = Descendants<ScrollViewer>(taskList).First();
             Assert.True(listScroll.ScrollableHeight > 0, "Task list must retain its own finite viewport.");
+            shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(window.ActualHeight < 360);
+            SaveImage(window, "compact-todo-list.png");
+            shell.ShowDashboardCommand.Execute(null);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             using var process = Process.GetCurrentProcess();
             var cpuStart = process.TotalProcessorTime;
             var elapsed = Stopwatch.StartNew();
@@ -265,6 +308,50 @@ public sealed class CompletionWpfTests
             foreach (var descendant in Descendants<T>(child)) yield return descendant;
         }
     }
+
+    private static void AssertPomodoroActions(Window window, params string[] expected)
+    {
+        var actions = new[] { "Bắt đầu", "Tạm dừng", "Tiếp tục", "Bỏ qua", "Dừng" };
+        var visible = Descendants<Button>(window).Where(button => button.IsVisible && button.Content is string text && actions.Contains(text)).ToArray();
+        Assert.Equal(expected, visible.Select(button => (string)button.Content));
+        Assert.All(visible, button => Assert.True(button.IsEnabled));
+        foreach (var feedbackView in Descendants<CompletionFeedbackView>(window).Where(view => view.IsVisible))
+        {
+            var bounds = feedbackView.TransformToAncestor(window).TransformBounds(new Rect(feedbackView.RenderSize));
+            Assert.All(visible, button => Assert.False(bounds.IntersectsWith(button.TransformToAncestor(window).TransformBounds(new Rect(button.RenderSize)))));
+        }
+        Assert.True(window.ActualWidth <= 320 && window.ActualHeight < 420);
+        if (visible.Length == 2)
+            Assert.Equal(visible[0].TranslatePoint(new Point(), window).Y, visible[1].TranslatePoint(new Point(), window).Y);
+    }
+
+    private static async Task CheckOverlayOpacityAsync(Window window)
+    {
+        Assert.True(GetCursorPos(out var original));
+        try
+        {
+            window.Activate();
+            Keyboard.ClearFocus();
+            var inside = window.PointToScreen(new Point(16, 16));
+            Assert.True(SetCursorPos((int)inside.X, (int)inside.Y));
+            await Task.Delay(75);
+            Assert.True(window.IsMouseOver);
+            Assert.Equal(1, window.Opacity);
+            Assert.True(SetCursorPos((int)SystemParameters.WorkArea.Left + 1, (int)SystemParameters.WorkArea.Bottom - 1));
+            await Task.Delay(75);
+            Assert.False(window.IsMouseOver);
+            Assert.Equal(0.6, window.Opacity);
+        }
+        finally { SetCursorPos(original.X, original.Y); }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out CursorPoint point);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetCursorPos(int x, int y);
+
+    private struct CursorPoint { public int X; public int Y; }
 
     private static void SaveImage(Window window, string name, double scale = 1)
     {

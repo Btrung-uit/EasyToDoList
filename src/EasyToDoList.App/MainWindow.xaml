@@ -12,10 +12,22 @@
         Background="{StaticResource GuildWoodBrush}"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Closing="OnClosing">
-    <Grid>
-        <Image Source="/EasyToDoList.App;component/Assets/Backgrounds/guild-valley.png"
-               Stretch="UniformToFill"
-               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Opacity" Value="1" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DisplayMode}" Value="{x:Static shell:ShellDisplayMode.Overlay}">
+                    <Setter Property="Opacity" Value="0.6" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="1" /></Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="Opacity" Value="1" /></Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+    <Grid RenderOptions.BitmapScalingMode="NearestNeighbor">
+        <Grid.Background>
+            <ImageBrush ImageSource="/EasyToDoList.App;component/Assets/Backgrounds/guild-valley.png" Stretch="UniformToFill" />
+        </Grid.Background>
         <Border Background="#3D182319" />
         <presentation:GuildScene x:Name="AmbientScene" />
 
@@ -117,11 +129,18 @@
         </Grid>
         </ScrollViewer>
 
-        <Border Margin="14" Padding="14"
+        <Border x:Name="OverlayFrame" Margin="8" Padding="8" VerticalAlignment="Top"
                 Background="{StaticResource GuildWoodBrush}"
                 BorderBrush="{StaticResource GuildGoldBrush}"
-                BorderThickness="3" CornerRadius="5"
+                BorderThickness="2" CornerRadius="5"
                 MouseLeftButtonDown="OnOverlayMouseLeftButtonDown">
+            <Border.Resources>
+                <Style x:Key="OverlayButtonStyle" TargetType="Button" BasedOn="{StaticResource GuildButtonStyle}">
+                    <Setter Property="MinHeight" Value="32" />
+                    <Setter Property="FontSize" Value="12" />
+                    <Setter Property="Padding" Value="8,4" />
+                </Style>
+            </Border.Resources>
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -135,9 +154,10 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="14" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="14" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid>
@@ -148,15 +168,15 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Command="{Binding ShowOverlayCommand}"
                             CommandParameter="{x:Static shell:OverlayMode.Todo}"
-                            Content="Việc cần làm" Style="{StaticResource GuildButtonStyle}" />
+                            Content="Việc cần làm" Style="{StaticResource OverlayButtonStyle}" />
                     <Button Grid.Column="2" Command="{Binding ShowOverlayCommand}"
                             CommandParameter="{x:Static shell:OverlayMode.Pomodoro}"
-                            Content="Pomodoro" Style="{StaticResource GuildButtonStyle}" />
+                            Content="Pomodoro" Style="{StaticResource OverlayButtonStyle}" />
                 </Grid>
 
-                <Border Grid.Row="2" Style="{StaticResource GuildPanelStyle}">
+                <Border Grid.Row="2" Padding="8" BorderThickness="2" Style="{StaticResource GuildPanelStyle}">
                     <Grid>
-                        <Grid>
+                        <Grid MinHeight="72">
                             <Grid.Style>
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -167,13 +187,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </Grid.Style>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="12" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <TextBlock Style="{StaticResource GuildHeadingTextStyle}" Text="Nhiệm vụ hiện tại" />
-                            <ListBox AutomationProperties.Name="Nhiệm vụ trong Overlay" Grid.Row="2" ItemsSource="{Binding Dashboard.Today.Items}"
+                            <ListBox AutomationProperties.Name="Nhiệm vụ trong Overlay" MaxHeight="144" ItemsSource="{Binding Dashboard.Today.Items}"
                                      Background="Transparent" BorderThickness="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemTemplate>
@@ -187,12 +201,12 @@
                                             <Button Grid.Column="1" Margin="8,0,0,0"
                                                     Command="{Binding DataContext.Dashboard.Today.CompleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" Content="Xong"
-                                                    Style="{StaticResource GuildButtonStyle}" />
+                                                    Style="{StaticResource OverlayButtonStyle}" />
                                         </Grid></today:CompletionSurface>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <TextBlock Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
                                        Style="{StaticResource GuildBodyTextStyle}"
                                        Text="Không còn nhiệm vụ nào cho hôm nay."
                                        Visibility="{Binding Dashboard.Today.IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -209,49 +223,45 @@
                                 </Style>
                             </StackPanel.Style>
                             <TextBlock HorizontalAlignment="Center" Style="{StaticResource GuildHeadingTextStyle}"
+                                       FontSize="16"
                                        Text="{Binding PomodoroOverlay.PhaseLabel}" />
-                            <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center"
-                                       FontSize="38" FontWeight="Bold"
+                            <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center"
+                                       FontSize="32" FontWeight="Bold"
                                        Foreground="{StaticResource GuildInkBrush}"
                                        Text="{Binding PomodoroOverlay.TimeText}" />
-                            <TextBlock Margin="0,6,0,14" HorizontalAlignment="Center"
+                            <TextBlock Margin="0,2,0,8" HorizontalAlignment="Center"
                                        Style="{StaticResource GuildBodyTextStyle}"
                                        Text="{Binding PomodoroOverlay.StatusLabel}" />
-                            <WrapPanel HorizontalAlignment="Center">
-                                <Button Margin="4" Command="{Binding PomodoroOverlay.StartCommand}"
-                                        IsEnabled="{Binding PomodoroOverlay.CanStart}"
-                                        Content="Bắt đầu" Style="{StaticResource GuildButtonStyle}" />
-                                <Button Margin="4" Command="{Binding PomodoroOverlay.PauseCommand}"
-                                        IsEnabled="{Binding PomodoroOverlay.IsRunning}"
-                                        Content="Tạm dừng" Style="{StaticResource GuildButtonStyle}" />
-                                <Button Margin="4" Command="{Binding PomodoroOverlay.ResumeCommand}"
-                                        IsEnabled="{Binding PomodoroOverlay.IsPaused}"
-                                        Content="Tiếp tục" Style="{StaticResource GuildButtonStyle}" />
-                                <Button Margin="4" Command="{Binding PomodoroOverlay.SkipCommand}"
-                                        IsEnabled="{Binding PomodoroOverlay.HasSession}"
-                                        Content="Bỏ qua" Style="{StaticResource GuildWoodButtonStyle}" />
-                                <Button Margin="4" Command="{Binding PomodoroOverlay.StopCommand}"
-                                        IsEnabled="{Binding PomodoroOverlay.HasSession}"
-                                        Content="Dừng" Style="{StaticResource GuildDangerButtonStyle}" />
-                            </WrapPanel>
-                            <TextBlock Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap"
+                            <Grid>
+                                <Button Width="160" HorizontalAlignment="Center" Command="{Binding PomodoroOverlay.StartCommand}"
+                                        Visibility="{Binding PomodoroOverlay.CanStart, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Content="Bắt đầu" Style="{StaticResource OverlayButtonStyle}" />
+                                <UniformGrid Columns="2" Visibility="{Binding PomodoroOverlay.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button Margin="0,0,4,0" Command="{Binding PomodoroOverlay.PauseCommand}" Content="Tạm dừng" Style="{StaticResource OverlayButtonStyle}" />
+                                    <Button Margin="4,0,0,0" Command="{Binding PomodoroOverlay.SkipCommand}" Content="Bỏ qua" Style="{StaticResource OverlayButtonStyle}" />
+                                </UniformGrid>
+                                <UniformGrid Columns="2" Visibility="{Binding PomodoroOverlay.IsPaused, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button Margin="0,0,4,0" Command="{Binding PomodoroOverlay.ResumeCommand}" Content="Tiếp tục" Style="{StaticResource OverlayButtonStyle}" />
+                                    <Button Margin="4,0,0,0" Command="{Binding PomodoroOverlay.StopCommand}" Content="Dừng" Style="{StaticResource OverlayButtonStyle}" />
+                                </UniformGrid>
+                            </Grid>
+                            <TextBlock TextAlignment="Center" TextWrapping="Wrap"
                                        Foreground="{StaticResource GuildDangerBrush}"
                                        Text="{Binding PomodoroOverlay.ErrorMessage}" />
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="4">
+                <today:CompletionFeedbackView Grid.Row="4" Margin="0,0,0,8" IsCompact="True" DataContext="{Binding Dashboard.Today}"
+                                              Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <Grid Grid.Row="5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Command="{Binding ShowDashboardCommand}" Content="Mở Dashboard" Style="{StaticResource GuildButtonStyle}" />
-                    <Button Grid.Column="2" Command="{Binding HideToTrayCommand}" Content="Ẩn" Style="{StaticResource GuildWoodButtonStyle}" />
-                    <Button Grid.Column="4" Command="{Binding ExitCommand}" Content="Thoát" Style="{StaticResource GuildDangerButtonStyle}" />
+                    <Button Grid.Column="0" Command="{Binding ShowDashboardCommand}" Content="Mở Dashboard" Style="{StaticResource OverlayButtonStyle}" />
+                    <Button Grid.Column="2" Command="{Binding HideToTrayCommand}" Content="Ẩn" Style="{StaticResource GuildWoodButtonStyle}" MinHeight="32" FontSize="12" Padding="8,4" />
                 </Grid>
             </Grid>
         </Border>
@@ -279,21 +289,34 @@
                        Text="{Binding ExitErrorMessage}"
                        TextWrapping="Wrap" />
         </Border>
-        <StackPanel DataContext="{Binding Dashboard.Today}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+        <Canvas>
+        <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+              Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}">
+        <Grid DataContext="{Binding Dashboard.Today}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                     MaxWidth="340" Panel.ZIndex="10">
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <Grid.Style>
+                <Style TargetType="Grid">
                     <Setter Property="Margin" Value="16" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding DataContext.DisplayMode, RelativeSource={RelativeSource AncestorType=Window}}"
                                      Value="{x:Static shell:ShellDisplayMode.Overlay}">
-                            <Setter Property="Margin" Value="16,16,16,96" />
+                            <Setter Property="Margin" Value="16,16,16,64" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </StackPanel.Style>
+            </Grid.Style>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource GuildCreamBrush}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive"/>
-            <today:CompletionFeedbackView/>
-        </StackPanel>
+            <today:CompletionFeedbackView Grid.Row="1">
+                <today:CompletionFeedbackView.Style>
+                    <Style TargetType="today:CompletionFeedbackView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding DataContext.DisplayMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Static shell:ShellDisplayMode.Dashboard}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </today:CompletionFeedbackView.Style>
+            </today:CompletionFeedbackView>
+        </Grid>
+        </Grid>
+        </Canvas>
     </Grid>
 </Window>

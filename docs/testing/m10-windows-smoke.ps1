@@ -239,7 +239,8 @@ try {
     Assert-That ($newRows[0].Id -is [string]) 'Test session must have one scalar identifier.'
     $testSessionId = $newRows[0].Id
     Assert-That ($newRows[0].Status -eq 0) 'Test session must be Running.'
-    Invoke-Element (Find-Name $window 'Thoát')
+    $menu = Open-TrayMenu
+    Invoke-Element (Find-Name $menu 'Exit')
     Assert-That ($primary.WaitForExit(15000)) 'Focus Exit must terminate the process.'
     $paused = Get-PomodoroRows | Where-Object { $_.Id -eq $testSessionId }
     Assert-That ($paused.Status -eq 1 -and $paused.RemainingSeconds -gt 0) 'Focus Exit must persist Paused with remaining time.'
@@ -249,7 +250,8 @@ try {
     [void](Wait-Until { Find-Name (Get-AppWindow) 'Đã tạm dừng' } 'restart shows Paused')
     $reopened = Get-PomodoroRows | Where-Object { $_.Id -eq $testSessionId }
     Assert-That ($reopened.RemainingSeconds -eq $paused.RemainingSeconds) 'Restart must preserve paused time.'
-    Invoke-Element (Find-Name (Get-AppWindow) 'Thoát')
+    $menu = Open-TrayMenu
+    Invoke-Element (Find-Name $menu 'Exit')
     Assert-That ($primary.WaitForExit(15000)) 'Restarted app must exit.'
     Record-Pass 'Restart preserves Paused Focus and remaining time'
 }
@@ -276,11 +278,11 @@ finally {
             if ($owned.Id -eq $primary.Id) {
                 $window = Get-AppWindow
                 if ($window) {
-                    if ($settingsNeedRestore) {
                     if ($window.Current.Name -like '*Overlay*') {
                         Invoke-Element (Find-Name $window 'Mở Dashboard')
                         $window = Get-AppWindow
                     }
+                    if ($settingsNeedRestore) {
                     Invoke-Element (Find-Name $window 'Cài đặt')
                     $box = Find-Name $window 'Khởi động cùng Windows'
                     if ($box) {
