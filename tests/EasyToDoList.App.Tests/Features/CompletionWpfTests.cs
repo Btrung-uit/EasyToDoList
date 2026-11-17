@@ -143,7 +143,6 @@ public sealed class CompletionWpfTests
         foreach (var (model, view) in new[]
         {
             (typeof(CalendarViewModel), typeof(CalendarView)),
-            (typeof(ProfileViewModel), typeof(ProfileView)),
             (typeof(SettingsViewModel), typeof(SettingsView)),
             (typeof(global::EasyToDoList.App.Features.Pomodoro.PomodoroViewModel), typeof(global::EasyToDoList.App.Features.Pomodoro.PomodoroView)),
         })
@@ -163,7 +162,7 @@ public sealed class CompletionWpfTests
         var service = new TodoService(new SqliteTodoStore(db), rewards, profiles, unit, new EconomyCalculator(), clock);
         await service.CreateAsync(new CreateTodoCommand("Ôn bài — runtime M09", clock.LocalToday, clock.LocalToday.AddDays(1)), CancellationToken.None);
         await service.CreateAsync(new CreateTodoCommand("Viết test tiếp theo", clock.LocalToday, clock.LocalToday), CancellationToken.None);
-        var profile = new ProfileViewModel(new SqliteProfileQuery(db), new SqliteRewardHistoryQuery(db));
+        var profile = new ProfileViewModel(new SqliteProfileQuery(db));
         var settings = new SettingsViewModel(new SqliteSettingsStore(db));
         var today = new TodayViewModel(service, clock, profile.LoadAsync,
             () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
@@ -250,10 +249,16 @@ public sealed class CompletionWpfTests
             Assert.True(window.ActualHeight < 360);
             Assert.DoesNotContain(Descendants<Button>(window), button => button.IsVisible && Equals(button.Content, "Thoát"));
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
-            toast = Assert.Single(Descendants<CompletionFeedbackView>(window), view => view.IsVisible);
-            Assert.True(toast.IsCompact && toast.ActualHeight > 40);
+            var popup = Assert.IsType<System.Windows.Controls.Primitives.Popup>(window.FindName("OverlayFeedbackPopup"));
+            Assert.True(popup.IsOpen);
+            toast = Assert.IsType<CompletionFeedbackView>(popup.Child);
+            Assert.True(toast.ActualHeight > 40);
+            Assert.All(Descendants<TextBlock>(toast).Where(text => text.ToolTip is string),
+                text => Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting(text)));
+            Assert.NotSame(PresentationSource.FromVisual(window), PresentationSource.FromVisual(toast));
+            var overlayHeight = window.ActualHeight;
             await CheckOverlayOpacityAsync(window);
-            var undo = Descendants<Button>(window).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
+            var undo = Descendants<Button>(toast).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
             Assert.True(undo.Focusable && undo.IsEnabled);
             Assert.NotEmpty(UIElementAutomationPeer.CreatePeerForElement(undo)!.GetName());
             window.Activate();
@@ -261,13 +266,44 @@ public sealed class CompletionWpfTests
             Assert.Equal(undo, Keyboard.FocusedElement);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.Equal(1, window.Opacity);
-            var dashboardButton = Descendants<Button>(window).Single(button => button.IsVisible && Equals(button.Content, "Mở Dashboard"));
-            toastBounds = toast.TransformToAncestor(root).TransformBounds(new Rect(toast.RenderSize));
-            Assert.False(toastBounds.IntersectsWith(dashboardButton.TransformToAncestor(root).TransformBounds(new Rect(dashboardButton.RenderSize))));
+            var popupBounds = ScreenBounds(toast);
+            var overlayBounds = WindowBounds(window);
+            Assert.False(popupBounds.IntersectsWith(overlayBounds),
+                $"Popup {popupBounds}, Overlay client {overlayBounds}, outer {window.Left},{window.Top},{window.ActualWidth},{window.ActualHeight}; render {window.RenderSize}");
             SaveImage(window, "m09-overlay.png");
+            SaveImage(toast, "overlay-completion-popup.png");
+            var oldLeft = window.Left;
+            window.Left -= 100;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var movedBy = overlayBounds.Left - WindowBounds(window).Left;
+            Assert.InRange(popupBounds.Left - ScreenBounds(toast).Left, movedBy - 1, movedBy + 1);
+            window.Left = oldLeft;
+            var oldTop = window.Top;
+            window.Top = WindowModeController.GetWorkArea(window).Bottom - window.ActualHeight;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(ScreenBounds(toast).Bottom <= WindowBounds(window).Top,
+                $"Popup {ScreenBounds(toast)}, Overlay {WindowBounds(window)}");
+            window.Top = oldTop;
+            var oldMinHeight = window.MinHeight;
+            var area = WindowModeController.GetWorkArea(window);
+            window.MinHeight = area.Height - 100;
+            window.Top = area.Top + 50;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.False(ScreenBounds(toast).IntersectsWith(WindowBounds(window)),
+                $"Popup must use a side when vertical space is insufficient: {ScreenBounds(toast)}, owner {WindowBounds(window)}");
+            window.MinHeight = oldMinHeight;
+            window.Top = oldTop;
+            shell.HideToTray();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.False(popup.IsOpen);
+            shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(popup.IsOpen);
             var feedback = Assert.Single(today.Feedback);
             await today.UndoAsync(feedback);
             await today.UndoAsync(feedback);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.False(popup.IsOpen);
             Assert.Equal(0, profile.Coins);
             Assert.Equal(2, await db.RewardTransactions.CountAsync());
             Assert.Equal(2, today.Items.Count);
@@ -277,14 +313,34 @@ public sealed class CompletionWpfTests
             await today.CompleteAsync(today.Items[0]);
             Assert.Single(today.Items);
             Assert.Single(today.Feedback);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(popup.IsOpen);
+            Assert.True(window.ActualHeight <= overlayHeight);
             shell.ShowDashboardCommand.Execute(null);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.False(popup.IsOpen);
             Assert.False(window.Topmost);
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
-            foreach (var page in new[] { "Today", "Calendar", "Pomodoro", "Profile", "Settings" })
+            Assert.DoesNotContain(Descendants<Button>(window), button => Equals(button.Content, "Hồ sơ"));
+            foreach (var page in new[] { "Today", "Calendar", "Pomodoro", "Settings" })
             {
                 dashboard.NavigateCommand.Execute(page);
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                if (page == "Pomodoro")
+                {
+                    var advanced = Assert.Single(Descendants<Expander>(window));
+                    Assert.False(advanced.IsExpanded);
+                    Assert.DoesNotContain(Descendants<TextBox>(advanced), box => box.IsVisible);
+                    var preset = Descendants<Button>(window).Single(button => Equals(button.Content, "45/10"));
+                    preset.Command.Execute(preset.CommandParameter);
+                    Assert.Equal(45, pomodoroVm.FocusMinutes);
+                    SaveImage(window, "pomodoro-presets.png");
+                    advanced.IsExpanded = true;
+                    await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                    Assert.Equal(4, Descendants<TextBox>(advanced).Count(box => box.IsVisible));
+                    SaveImage(window, "pomodoro-advanced.png");
+                    pomodoroVm.SelectPresetCommand.Execute("25/5");
+                }
                 foreach (var control in Descendants<Control>(window).Where(x => x.IsVisible && x.Focusable
                     && (x.GetType() == typeof(TextBox) || x is DatePicker or Slider or CheckBox or DataGrid or ListBox || x is Button { Content: not null })))
                     Assert.False(string.IsNullOrWhiteSpace(UIElementAutomationPeer.CreatePeerForElement(control)?.GetName()), $"Missing name: {page}/{control.GetType().Name}");
@@ -449,7 +505,21 @@ public sealed class CompletionWpfTests
 
     private struct CursorPoint { public int X; public int Y; }
 
-    private static void SaveImage(Window window, string name, double scale = 1)
+    private static Rect ScreenBounds(FrameworkElement element) => new(
+        element.PointToScreen(new Point()), element.PointToScreen(new Point(element.ActualWidth, element.ActualHeight)));
+
+    private static Rect WindowBounds(Window window)
+    {
+        Assert.True(GetWindowRect(new System.Windows.Interop.WindowInteropHelper(window).Handle, out var bounds));
+        return new Rect(new Point(bounds.Left, bounds.Top), new Point(bounds.Right, bounds.Bottom));
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr handle, out NativeRect bounds);
+
+    private struct NativeRect { public int Left; public int Top; public int Right; public int Bottom; }
+
+    private static void SaveImage(FrameworkElement window, string name, double scale = 1)
     {
         window.UpdateLayout();
         var bitmap = new RenderTargetBitmap((int)(window.ActualWidth * scale), (int)(window.ActualHeight * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);

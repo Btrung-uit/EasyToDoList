@@ -82,7 +82,7 @@ public partial class App : Application
                 () => lifecycleTodos.GetTodayAsync(clock.LocalToday, CancellationToken.None),
                 () => settings.Snapshot, (title, body) => _tray?.Notify(title, body));
             await _lifecycle.InitializeAsync();
-            var profile = new ProfileViewModel(new SqliteProfileQuery(_dbContext), new SqliteRewardHistoryQuery(_dbContext));
+            var profile = new ProfileViewModel(new SqliteProfileQuery(_dbContext));
             var today = new TodayViewModel(new TodoService(todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
                 clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
             var dashboardPomodoro = new DashboardPomodoroViewModel();

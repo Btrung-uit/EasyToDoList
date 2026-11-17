@@ -2,44 +2,22 @@
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="clr-namespace:EasyToDoList.App.Features.Today">
- <Border Background="{StaticResource GuildWoodBrush}" BorderBrush="{StaticResource GuildGoldBrush}" BorderThickness="2" CornerRadius="5"
+ <Border Padding="12" Background="{StaticResource GuildWoodBrush}" BorderBrush="{StaticResource GuildGoldBrush}" BorderThickness="2" CornerRadius="5"
          Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}">
-  <Border.Style><Style TargetType="Border"><Setter Property="Padding" Value="12"/>
-   <Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="Padding" Value="8"/></DataTrigger></Style.Triggers>
-  </Style></Border.Style>
   <Grid>
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-   <Grid>
-    <Grid.Style><Style TargetType="Grid"><Setter Property="Margin" Value="0,0,0,8"/>
-     <Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="Margin" Value="0,0,0,4"/></DataTrigger></Style.Triggers>
-    </Style></Grid.Style>
+   <Grid Margin="0,0,0,8">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-    <Image Width="36" Height="36" Source="{Binding MascotFrame}" RenderOptions.BitmapScalingMode="NearestNeighbor" AutomationProperties.Name="Hiệp sĩ chúc mừng hoàn thành">
-     <Image.Style><Style TargetType="Image"><Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Image.Style>
-    </Image>
-    <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding ComboLabel}">
-     <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource GuildWoodBodyTextStyle}"><Setter Property="Margin" Value="8,0"/>
-      <Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="Margin" Value="0"/><Setter Property="FontSize" Value="12"/></DataTrigger></Style.Triggers>
-     </Style></TextBlock.Style>
-    </TextBlock>
-    <local:ComboRing Grid.Column="2" Width="24" Height="24" Progress="{Binding ComboProgress}" AutomationProperties.Name="Cửa sổ combo 2 giây">
-     <local:ComboRing.Style><Style TargetType="local:ComboRing"><Setter Property="Visibility" Value="Collapsed"/>
-      <Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding IsComboActive}" Value="True"/><Condition Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="False"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers>
-     </Style></local:ComboRing.Style>
-    </local:ComboRing>
+    <Image Width="36" Height="36" Source="{Binding MascotFrame}" RenderOptions.BitmapScalingMode="NearestNeighbor" AutomationProperties.Name="Hiệp sĩ chúc mừng hoàn thành"/>
+    <TextBlock Grid.Column="1" Margin="8,0" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding ComboLabel}" Style="{StaticResource GuildWoodBodyTextStyle}"/>
+    <local:ComboRing Grid.Column="2" Width="24" Height="24" Progress="{Binding ComboProgress}" AutomationProperties.Name="Cửa sổ combo 2 giây"
+                     Visibility="{Binding IsComboActive, Converter={StaticResource BooleanToVisibilityConverter}}"/>
    </Grid>
    <ScrollViewer Grid.Row="1" MaxHeight="140" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <ItemsControl ItemsSource="{Binding Feedback}"><ItemsControl.ItemTemplate><DataTemplate>
      <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <TextBlock TextWrapping="Wrap" ToolTip="{Binding Message}" AutomationProperties.Name="{Binding Message}" AutomationProperties.LiveSetting="Polite">
-       <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource GuildWoodBodyTextStyle}"><Setter Property="Text" Value="{Binding Message}"/>
-        <Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="Text" Value="{Binding CompactMessage}"/><Setter Property="FontSize" Value="12"/></DataTrigger></Style.Triggers>
-       </Style></TextBlock.Style>
-      </TextBlock>
-      <Button Grid.Column="1" Margin="8,0,0,0" Content="Hoàn tác" ToolTip="Hoàn tác trong 5 giây" AutomationProperties.Name="Hoàn tác hoàn thành nhiệm vụ"
-       Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
-       <Button.Style><Style TargetType="Button" BasedOn="{StaticResource GuildWoodButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=local:CompletionFeedbackView}}" Value="True"><Setter Property="MinHeight" Value="28"/><Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="8,4"/></DataTrigger></Style.Triggers></Style></Button.Style>
-      </Button>
+      <TextBlock Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Center" Style="{StaticResource GuildWoodBodyTextStyle}" ToolTip="{Binding Message}" AutomationProperties.Name="{Binding Message}" AutomationProperties.LiveSetting="Polite"/>
+      <Button Grid.Column="1" Margin="8,0,0,0" Content="Hoàn tác" Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" ToolTip="Hoàn tác trong 5 giây sau khi hoàn thành" AutomationProperties.Name="Hoàn tác nhiệm vụ vừa hoàn thành" Style="{StaticResource GuildWoodButtonStyle}"/>
      </Grid>
     </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
    </ScrollViewer>

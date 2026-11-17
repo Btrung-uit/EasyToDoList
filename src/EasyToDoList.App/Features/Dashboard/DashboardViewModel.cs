@@ -46,7 +46,6 @@ public sealed class DashboardViewModel : ViewModelBase
         "Today" => Today,
         "Calendar" => Calendar,
         "Pomodoro" => Pomodoro,
-        "Profile" => Profile,
         "Settings" => Settings,
         _ => Current,
     };

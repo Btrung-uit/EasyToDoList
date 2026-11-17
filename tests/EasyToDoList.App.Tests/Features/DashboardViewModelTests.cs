@@ -10,6 +10,23 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class DashboardViewModelTests
 {
+    [Theory]
+    [InlineData("25/5", 25, 5, 20)]
+    [InlineData("45/10", 45, 10, 20)]
+    [InlineData("50/10", 50, 10, 25)]
+    public void Presets_replace_custom_values_with_valid_configuration(string preset, int focus, int rest, int longRest)
+    {
+        var vm = new PomodoroViewModel { FocusMinutes = 40, ShortBreakMinutes = 1, LongBreakInterval = 3 };
+        Assert.Null(vm.TryBuildConfiguration());
+        vm.SelectPresetCommand.Execute(preset);
+        var configuration = Assert.IsType<EasyToDoList.Core.Pomodoro.PomodoroConfiguration>(vm.TryBuildConfiguration());
+        Assert.Equal(focus, configuration.FocusMinutes);
+        Assert.Equal(rest, configuration.ShortBreakMinutes);
+        Assert.Equal(longRest, configuration.LongBreakMinutes);
+        Assert.Equal(4, configuration.LongBreakInterval);
+        Assert.Null(vm.ValidationMessage);
+    }
+
     [Fact]
     public async Task Today_form_reports_field_specific_errors_before_calling_service()
     {

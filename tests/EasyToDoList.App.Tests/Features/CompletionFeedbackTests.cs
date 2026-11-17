@@ -7,6 +7,19 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class CompletionFeedbackTests
 {
+    [Theory]
+    [InlineData(0, "+38 EXP, +6 coin")]
+    [InlineData(13, "+38 EXP (sớm +13), +6 coin")]
+    public async Task Reward_message_only_shows_positive_early_bonus(int bonus, string expected)
+    {
+        var (vm, _, _) = await CreateAsync();
+        await vm.CompleteAsync(vm.Items[0]);
+        var feedback = Assert.Single(vm.Feedback);
+        feedback = feedback with { Result = feedback.Result with { EarlyBonusExperience = bonus } };
+        Assert.Equal(expected, feedback.CompactMessage);
+        Assert.Equal($"One: {expected}", feedback.Message);
+    }
+
     [Fact]
     public async Task Mascot_celebrates_at_ten_fps_once_then_returns_to_idle()
     {

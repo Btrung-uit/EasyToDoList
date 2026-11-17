@@ -13,7 +13,11 @@ public sealed class PomodoroViewModel : ViewModelBase
     private int _longBreakInterval = 4;
     private string? _validationMessage;
 
-    public PomodoroViewModel() => ValidateCommand = new RelayCommand(_ => TryBuildConfiguration());
+    public PomodoroViewModel()
+    {
+        ValidateCommand = new RelayCommand(_ => TryBuildConfiguration());
+        SelectPresetCommand = new RelayCommand(SelectPreset);
+    }
 
     public int FocusMinutes { get => _focusMinutes; set => SetField(ref _focusMinutes, value); }
     public int ShortBreakMinutes { get => _shortBreakMinutes; set => SetField(ref _shortBreakMinutes, value); }
@@ -21,6 +25,24 @@ public sealed class PomodoroViewModel : ViewModelBase
     public int LongBreakInterval { get => _longBreakInterval; set => SetField(ref _longBreakInterval, value); }
     public string? ValidationMessage { get => _validationMessage; private set => SetField(ref _validationMessage, value); }
     public ICommand ValidateCommand { get; }
+    public ICommand SelectPresetCommand { get; }
+
+    private void SelectPreset(object? preset)
+    {
+        var configuration = preset switch
+        {
+            "25/5" => PomodoroConfiguration.Standard,
+            "45/10" => new PomodoroConfiguration(45, 10, 20, 4),
+            "50/10" => PomodoroConfiguration.DeepFocus,
+            _ => null,
+        };
+        if (configuration is null) return;
+        FocusMinutes = configuration.FocusMinutes;
+        ShortBreakMinutes = configuration.ShortBreakMinutes;
+        LongBreakMinutes = configuration.LongBreakMinutes;
+        LongBreakInterval = configuration.LongBreakInterval;
+        ValidationMessage = null;
+    }
 
     public PomodoroConfiguration? TryBuildConfiguration()
     {

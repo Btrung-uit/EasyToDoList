@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using EasyToDoList.App.Shell;
 using EasyToDoList.App.Features.Today;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     public MainWindow(ShellViewModel viewModel)
     {
         InitializeComponent();
+        OverlayFeedbackPopup.CustomPopupPlacementCallback = PlaceFeedbackPopup;
         _viewModel = viewModel;
         _lastAudioSnapshot = viewModel.PomodoroOverlay?.Snapshot;
         _modeController = new WindowModeController(this);
@@ -108,6 +110,7 @@ public partial class MainWindow : Window
 
     private void OnLocationChanged(object? sender, EventArgs e)
     {
+        RepositionFeedbackPopup();
         if (_viewModel.DisplayMode == ShellDisplayMode.Overlay && !_modeController.IsApplying)
         {
             _viewModel.UpdateOverlayPosition(Left, Top);
@@ -116,11 +119,35 @@ public partial class MainWindow : Window
 
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
     {
+        RepositionFeedbackPopup();
         if (_viewModel.DisplayMode != ShellDisplayMode.Overlay || _modeController.IsApplying) return;
         var area = WindowModeController.GetWorkArea(this);
         MaxHeight = Math.Max(MinHeight, area.Height - 32);
         Left = Math.Clamp(Left, area.Left, Math.Max(area.Left, area.Right - ActualWidth));
         Top = Math.Clamp(Top, area.Top, Math.Max(area.Top, area.Bottom - ActualHeight));
+    }
+
+    private void RepositionFeedbackPopup()
+    {
+        if (!OverlayFeedbackPopup.IsOpen) return;
+        // Popup has its own HWND and does not follow owner movement automatically.
+        OverlayFeedbackPopup.HorizontalOffset += 1;
+        OverlayFeedbackPopup.HorizontalOffset -= 1;
+    }
+
+    private CustomPopupPlacement[] PlaceFeedbackPopup(Size popupSize, Size targetSize, Point offset)
+    {
+        // Window size includes the title bar; Popup coordinates start inside the client area.
+        var chromeHeight = ActualHeight - ((FrameworkElement)Content).ActualHeight;
+        var chromeWidth = ActualWidth - ((FrameworkElement)Content).ActualWidth;
+        var left = targetSize.Width - popupSize.Width;
+        return
+        [
+            new(new Point(left, targetSize.Height - chromeHeight + 8), PopupPrimaryAxis.Horizontal),
+            new(new Point(left, -popupSize.Height - chromeHeight - 8), PopupPrimaryAxis.Horizontal),
+            new(new Point(-popupSize.Width - chromeWidth - 8, 0), PopupPrimaryAxis.Vertical),
+            new(new Point(targetSize.Width - chromeWidth + 8, 0), PopupPrimaryAxis.Vertical),
+        ];
     }
 
     private async void OnOverlayTimerTick(object? sender, EventArgs e)
