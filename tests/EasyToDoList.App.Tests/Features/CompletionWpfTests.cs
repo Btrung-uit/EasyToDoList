@@ -30,6 +30,17 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class CompletionWpfTests
 {
+    [Theory]
+    [InlineData(261, false)]
+    [InlineData(260, true)]
+    [InlineData(262, false)]
+    public void Popup_geometry_distinguishes_touching_edges_from_visible_overlap(double popupTop, bool overlaps)
+    {
+        var owner = new Rect(728, 16, 280, 245);
+        var popup = new Rect(696, popupTop, 320, 121);
+        Assert.Equal(overlaps, HasVisibleOverlap(owner, popup));
+    }
+
     [Fact]
     public Task Window_renders_committed_feedback_switches_modes_and_undo_reverses_sqlite_once() =>
         RunOnDispatcherAsync(CheckWindowAsync);
@@ -271,7 +282,7 @@ public sealed class CompletionWpfTests
             AssertNativeAlpha(window, 255);
             var popupBounds = ScreenBounds(toast);
             var overlayBounds = WindowBounds(window);
-            Assert.False(popupBounds.IntersectsWith(overlayBounds),
+            Assert.False(HasVisibleOverlap(popupBounds, overlayBounds),
                 $"Popup {popupBounds}, Overlay client {overlayBounds}, outer {window.Left},{window.Top},{window.ActualWidth},{window.ActualHeight}; render {window.RenderSize}");
             SaveImage(window, "m09-overlay.png");
             SaveImage(toast, "overlay-completion-popup.png");
@@ -292,7 +303,7 @@ public sealed class CompletionWpfTests
             window.MinHeight = area.Height - 100;
             window.Top = area.Top + 50;
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-            Assert.False(ScreenBounds(toast).IntersectsWith(WindowBounds(window)),
+            Assert.False(HasVisibleOverlap(ScreenBounds(toast), WindowBounds(window)),
                 $"Popup must use a side when vertical space is insufficient: {ScreenBounds(toast)}, owner {WindowBounds(window)}");
             window.MinHeight = oldMinHeight;
             window.Top = oldTop;
@@ -486,7 +497,7 @@ public sealed class CompletionWpfTests
         foreach (var feedbackView in Descendants<CompletionFeedbackView>(window).Where(view => view.IsVisible))
         {
             var bounds = feedbackView.TransformToAncestor(window).TransformBounds(new Rect(feedbackView.RenderSize));
-            Assert.All(visible, button => Assert.False(bounds.IntersectsWith(button.TransformToAncestor(window).TransformBounds(new Rect(button.RenderSize)))));
+            Assert.All(visible, button => Assert.False(HasVisibleOverlap(bounds, button.TransformToAncestor(window).TransformBounds(new Rect(button.RenderSize)))));
         }
         Assert.True(window.ActualWidth <= 280 && window.ActualHeight < 240,
             $"Compact overlay size {window.ActualWidth}x{window.ActualHeight}; frame {((FrameworkElement)window.FindName("OverlayFrame")).ActualHeight}; min {window.MinHeight}; sizing {window.SizeToContent}");
@@ -596,6 +607,12 @@ public sealed class CompletionWpfTests
     private static extern bool SetCursorPos(int x, int y);
 
     private struct CursorPoint { public int X; public int Y; }
+
+    private static bool HasVisibleOverlap(Rect first, Rect second)
+    {
+        var intersection = Rect.Intersect(first, second);
+        return !intersection.IsEmpty && intersection.Width > 0 && intersection.Height > 0;
+    }
 
     private static Rect ScreenBounds(FrameworkElement element) => new(
         element.PointToScreen(new Point()), element.PointToScreen(new Point(element.ActualWidth, element.ActualHeight)));
