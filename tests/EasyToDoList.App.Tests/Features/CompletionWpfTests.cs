@@ -31,7 +31,71 @@ namespace EasyToDoList.App.Tests.Features;
 public sealed class CompletionWpfTests
 {
     [Fact]
-    public async Task Window_renders_committed_feedback_switches_modes_and_undo_reverses_sqlite_once()
+    public Task Window_renders_committed_feedback_switches_modes_and_undo_reverses_sqlite_once() =>
+        RunOnDispatcherAsync(CheckWindowAsync);
+
+    private static async Task CheckDashboardRoundTripsAsync(WindowState dashboardState)
+    {
+        var window = new Window { Content = new Border { Height = 180 } };
+        try
+        {
+            var controller = new WindowModeController(window);
+            controller.Apply(ShellDisplayMode.Dashboard);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var area = WindowModeController.GetWorkArea(window);
+            window.Width = Math.Min(1040, area.Width);
+            window.Height = Math.Min(680, area.Height);
+            window.Left = area.Left + (area.Width - window.Width) / 3;
+            window.Top = area.Top + (area.Height - window.Height) / 3;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var original = window.RestoreBounds;
+            window.WindowState = dashboardState;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+
+            for (var iteration = 0; iteration < 2; iteration++)
+            {
+                if (iteration == 1) controller.Apply(ShellDisplayMode.HiddenToTray);
+                controller.Apply(ShellDisplayMode.Overlay, area.Right - 340, area.Top + 20);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                Assert.Equal(WindowState.Normal, window.WindowState);
+                Assert.True(window.ActualWidth <= 320);
+                Assert.True(window.ActualHeight < 360);
+                controller.Apply(ShellDisplayMode.Dashboard);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                Assert.Equal(dashboardState, window.WindowState);
+                AssertBounds(original, window.RestoreBounds);
+            }
+
+            controller.Apply(ShellDisplayMode.HiddenToTray);
+            controller.Apply(ShellDisplayMode.Dashboard);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal(dashboardState, window.WindowState);
+            AssertBounds(original, window.RestoreBounds);
+            window.WindowState = WindowState.Normal;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertBounds(original, new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight));
+        }
+        finally { window.Close(); }
+    }
+
+    private static async Task CheckDashboardFallbackAsync()
+    {
+        var window = new Window { Content = new Border { Height = 180 } };
+        try
+        {
+            var controller = new WindowModeController(window);
+            controller.Apply(ShellDisplayMode.Overlay);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            controller.Apply(ShellDisplayMode.Dashboard);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var area = WindowModeController.GetWorkArea(window);
+            Assert.InRange(Math.Abs(window.Left + window.ActualWidth / 2 - (area.Left + area.Width / 2)), 0, 1);
+            Assert.InRange(Math.Abs(window.Top + window.ActualHeight / 2 - (area.Top + area.Height / 2)), 0, 1);
+        }
+        finally { window.Close(); }
+    }
+
+    private static async Task RunOnDispatcherAsync(Func<Task> check)
     {
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
@@ -39,7 +103,7 @@ public sealed class CompletionWpfTests
             SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
             Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
             {
-                try { await CheckWindowAsync(); completion.SetResult(); }
+                try { await check(); completion.SetResult(); }
                 catch (Exception error) { completion.SetException(error); }
                 finally { Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background); }
             });
@@ -51,8 +115,20 @@ public sealed class CompletionWpfTests
         await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
     }
 
+    private static void AssertBounds(Rect expected, Rect actual)
+    {
+        Assert.InRange(Math.Abs(expected.Left - actual.Left), 0, 1);
+        Assert.InRange(Math.Abs(expected.Top - actual.Top), 0, 1);
+        Assert.InRange(Math.Abs(expected.Width - actual.Width), 0, 1);
+        Assert.InRange(Math.Abs(expected.Height - actual.Height), 0, 1);
+    }
+
     private static async Task CheckWindowAsync()
     {
+        // WPF cannot reopen modeless windows after Application.Shutdown in this test host.
+        await CheckDashboardRoundTripsAsync(WindowState.Normal);
+        await CheckDashboardRoundTripsAsync(WindowState.Maximized);
+        await CheckDashboardFallbackAsync();
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         foreach (var theme in new[] { "Colors", "Spacing", "Typography", "Controls" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -105,6 +181,26 @@ public sealed class CompletionWpfTests
         try
         {
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            var dashboardBounds = window.RestoreBounds;
+            shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            shell.ShowDashboardCommand.Execute(null);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertBounds(dashboardBounds, window.RestoreBounds);
+            window.WindowState = WindowState.Maximized;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            shell.ShowOverlayCommand.Execute(OverlayMode.Todo);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal(WindowState.Normal, window.WindowState);
+            Assert.True(window.ActualWidth <= 320 && window.ActualHeight < 360);
+            SaveImage(window, "overlay-from-maximized.png");
+            shell.ShowDashboardCommand.Execute(null);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal(WindowState.Maximized, window.WindowState);
+            SaveImage(window, "dashboard-restored-maximized.png");
+            window.WindowState = WindowState.Normal;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            AssertBounds(dashboardBounds, new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight));
             var scenes = Descendants<GuildScene>(window).ToArray();
             Assert.Equal(2, scenes.Length);
             Assert.All(scenes, scene => Assert.True(scene.IsAnimating));

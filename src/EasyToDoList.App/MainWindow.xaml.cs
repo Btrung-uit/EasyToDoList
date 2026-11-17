@@ -108,7 +108,7 @@ public partial class MainWindow : Window
 
     private void OnLocationChanged(object? sender, EventArgs e)
     {
-        if (_viewModel.DisplayMode == ShellDisplayMode.Overlay)
+        if (_viewModel.DisplayMode == ShellDisplayMode.Overlay && !_modeController.IsApplying)
         {
             _viewModel.UpdateOverlayPosition(Left, Top);
         }
@@ -116,7 +116,7 @@ public partial class MainWindow : Window
 
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (_viewModel.DisplayMode != ShellDisplayMode.Overlay) return;
+        if (_viewModel.DisplayMode != ShellDisplayMode.Overlay || _modeController.IsApplying) return;
         var area = WindowModeController.GetWorkArea(this);
         MaxHeight = Math.Max(MinHeight, area.Height - 32);
         Left = Math.Clamp(Left, area.Left, Math.Max(area.Left, area.Right - ActualWidth));

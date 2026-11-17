@@ -356,6 +356,7 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [x] Overlay trong mờ 60% mặc định; rõ khi hover hoặc có focus bàn phím. Pomodoro chỉ hiện Bắt đầu / Tạm dừng+Bỏ qua / Tiếp tục+Dừng theo trạng thái.
 - [x] Footer Overlay chỉ còn Mở Dashboard và Ẩn; X vẫn ẩn vào tray theo lựa chọn của người dùng. Thoát hẳn qua tray → Exit.
 - [x] Feedback trong Overlay dùng bản compact riêng trên hàng điều hướng, không che nút Pomodoro; toast Dashboard giữ vị trí nổi. Smoke script M10 dùng tray Exit thay nút Thoát đã bỏ.
+- [x] Chuyển Dashboard ↔ Overlay lưu/khôi phục vị trí, kích thước và trạng thái phóng to riêng của Dashboard; Overlay luôn về Normal. Không có bounds cũ thì Dashboard mở giữa màn hình; chuyển qua tray hoặc lặp nhiều lần vẫn giữ bounds. Chặn lưu/clamp tọa độ trung gian khi đang chuyển chế độ.
 
 Kiểm chứng: 216/216 tests pass; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật, focus bàn phím, các trạng thái nút và feedback không che thao tác; vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP. Máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
 

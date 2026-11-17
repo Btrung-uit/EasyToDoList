@@ -132,7 +132,7 @@ public partial class App : Application
         if (_shell is null || MainWindow is null) return;
         _shell.ShowDashboardCommand.Execute(null);
         MainWindow.Show();
-        MainWindow.WindowState = WindowState.Normal;
+        if (MainWindow.WindowState == WindowState.Minimized) MainWindow.WindowState = WindowState.Normal;
         MainWindow.Activate();
     }
 
