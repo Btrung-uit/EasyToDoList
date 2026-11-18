@@ -32,8 +32,8 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
-| M10 | Windows lifecycle, tray, notification và startup | Đã triển khai; chờ kiểm thử Windows thủ công | M04, M05, M06 |
-| M11 | Accessibility, visual polish và asset integration | Đã triển khai; chờ kiểm thử visual/accessibility thủ công | M07–M10 |
+| M10 | Windows lifecycle, tray, notification và startup | Hoàn thành — chốt 18/11/2026 | M04, M05, M06 |
+| M11 | Accessibility, visual polish và asset integration | Hoàn thành — chốt 18/11/2026 | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
 
 Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
@@ -267,6 +267,8 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 **Mục tiêu:** Ứng dụng cư xử đúng như một Windows utility khi chạy nền, sleep/resume và khởi động lại.
 
+**Chốt 18/11/2026 theo yêu cầu người dùng:** hoàn tất triển khai, gồm sửa lưu Pomodoro khi Windows session kết thúc. Người dùng xác nhận Sleep có tạm dừng. Các checkbox kiểm chứng thủ công chưa tick dưới đây được chuyển sang release gate M12, không được coi là đã pass; giữ nguyên evidence chi tiết trong [M10 checklist](docs/testing/m10-windows-checklist.md).
+
 ### Phạm vi
 
 - [x] System tray menu: Overlay, Dashboard, Exit.
@@ -295,6 +297,8 @@ Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không
 
 **Mục tiêu:** Hoàn thiện Guild Quest Board UI và tích hợp ambient/mascot mà không làm giảm khả năng sử dụng.
 
+**Chốt 18/11/2026 theo yêu cầu người dùng:** hoàn tất triển khai, gồm dashboard Quest Journal và logo mới. Các checkbox thủ công chưa tick được chuyển sang release gate M12; việc chốt không thay thế kiểm chứng DPI thật, Narrator, High Contrast, âm thanh và profiling dài hạn.
+
 ### Phạm vi
 
 - [x] Tích hợp normalized mascot frames `320×320`.
@@ -317,7 +321,7 @@ Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không
 - [x] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
 - [x] Commit: `feat: finish medieval visual and accessibility pass`.
 
-Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Không đánh dấu hoàn thành M11 trước khi các kiểm tra thủ công pass.
+Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Trạng thái triển khai đã chốt theo quyết định 18/11/2026; các kiểm tra còn lại tiếp tục là release gate M12.
 
 ## M12 — Installer và release verification
 
@@ -334,6 +338,7 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [ ] Test fresh install, upgrade, uninstall và migration.
 - [ ] Test offline, tray, notification, sleep/resume và midnight rollover.
 - [ ] Test crash recovery, DPI và animation/settings.
+- [ ] Đóng các kiểm chứng thủ công còn mở trong checklist M10/M11 trước phát hành; chốt milestone không đồng nghĩa các kiểm chứng này đã pass.
 
 ### Hoàn thành khi
 

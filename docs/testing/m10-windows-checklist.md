@@ -1,5 +1,7 @@
 # M10 — Windows 11 manual checks
 
+**Quyết định 18/11/2026:** người dùng chốt M10 về triển khai. Các mục `[ ]` tiếp tục là kiểm chứng trước phát hành M12; không đánh dấu pass khi chưa có evidence. Những nhận định “chưa đóng M10” trong phần lịch sử dưới đây phản ánh thời điểm kiểm tra cũ.
+
 Chạy bản Release hiện tại sau khi tự thoát phiên EasyToDoList đang dùng. Không chạy hai phiên bản khác nhau trên cùng database để kiểm thử.
 
 - [x] Mở Dashboard, chuyển Overlay, đóng bằng X: tiến trình còn sống và tray có Overlay / Dashboard / Exit. Cả ba mục hoạt động; double-click tray mở Dashboard.
