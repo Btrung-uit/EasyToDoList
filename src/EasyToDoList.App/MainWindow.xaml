@@ -8,6 +8,7 @@
         xmlns:presentation="clr-namespace:EasyToDoList.App.Presentation"
         mc:Ignorable="d"
         Title="EasyToDoList — Hội quán nhiệm vụ"
+        Icon="/EasyToDoList.App;component/Assets/Branding/easytodolist.ico"
         Width="1180" Height="760" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource GuildWoodBrush}"
@@ -49,10 +50,13 @@
                     BorderThickness="3" CornerRadius="5">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Image Width="52" Height="52" Margin="0,0,12,0" Stretch="Uniform"
+                           Source="/EasyToDoList.App;component/Assets/Branding/easytodolist-logo.png"
+                           AutomationProperties.Name="Logo EasyToDoList — Hội Quản Nhiệm Vụ" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource GuildCreamBrush}" Text="HỘI QUẢN NHIỆM VỤ" />
                         <TextBlock Margin="0,4,0,0"
                                    Style="{StaticResource GuildWoodBodyTextStyle}"

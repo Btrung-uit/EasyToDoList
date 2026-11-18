@@ -7,9 +7,13 @@ public sealed class SystemTrayService : IDisposable
 {
     private readonly NotifyIcon _icon;
     private readonly ContextMenuStrip _menu = new();
+    private readonly Icon _applicationIcon;
 
     public SystemTrayService(Action overlay, Action dashboard, Action exit)
     {
+        using var stream = typeof(SystemTrayService).Assembly.GetManifestResourceStream("Branding.AppIcon")!;
+        using var sourceIcon = new Icon(stream, 32, 32);
+        _applicationIcon = (Icon)sourceIcon.Clone();
         _menu.Items.Add("Overlay", null, (_, _) => overlay());
         _menu.Items.Add("Dashboard", null, (_, _) => dashboard());
         _menu.Items.Add(new ToolStripSeparator());
@@ -17,7 +21,7 @@ public sealed class SystemTrayService : IDisposable
         _icon = new NotifyIcon
         {
             Text = "EasyToDoList",
-            Icon = SystemIcons.Application,
+            Icon = _applicationIcon,
             ContextMenuStrip = _menu,
             Visible = true,
         };
@@ -32,6 +36,7 @@ public sealed class SystemTrayService : IDisposable
     {
         _icon.Visible = false;
         _icon.Dispose();
+        _applicationIcon.Dispose();
         _menu.Dispose();
     }
 }

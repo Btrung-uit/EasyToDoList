@@ -184,6 +184,10 @@ public sealed class CompletionWpfTests
         settings.MasterVolume = 0;
         var shell = new ShellViewModel(pomodoro, dashboard, new PomodoroOverlayViewModel(pomodoro, pomodoroVm.TryBuildConfiguration));
         var window = new MainWindow(shell);
+        Assert.NotNull(window.Icon);
+        var logo = Assert.Single(Descendants<Image>(window), image => AutomationProperties.GetName(image).StartsWith("Logo EasyToDoList"));
+        Assert.NotNull(logo.Source);
+        Assert.Equal(52, logo.Width);
         using var tray = new SystemTrayService(
             () => shell.ShowOverlayCommand.Execute(null),
             () => shell.ShowDashboardCommand.Execute(null),
