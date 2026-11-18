@@ -384,6 +384,12 @@ Kiểm chứng snapshot cuối: 228/228 tests pass (App 81, Core 99, Infrastruct
 - [x] ICO 7 kích thước dùng cho executable, cửa sổ/taskbar và tray; icon tray được giải phóng khi Exit.
 - [x] Release 228/228 tests pass, build warnings-as-errors 0 warning/error; xem ảnh WPF và kiểm tra layout 900×600. Debug bị instance đang chạy khóa executable nên kiểm chứng Release, không đóng app cá nhân. Nguồn asset: [branding](assets/branding/README.md).
 
+## Pomodoro shutdown persistence — 18/11/2026
+
+- [x] Shutdown/logoff dừng tick và lưu Paused đồng bộ bằng kết nối SQLite riêng, busy timeout 2 giây. Restart dùng cùng đường SessionEnding.
+- [x] Giữ phiên đã pause, không tính thời gian offline hay phát thưởng trong shutdown; nếu lưu cuối thất bại vẫn phục hồi checkpoint định kỳ và không phủ quyết Windows.
+- [x] 5 regression tests trên file SQLite thật; full suite 233/233 pass (App 81, Core 99, Infrastructure 53), build warnings-as-errors 0 warning/error. WPF regression pass; chưa tự shutdown/restart máy và chưa đóng M10. Chi tiết: [M10 checklist](docs/testing/m10-windows-checklist.md).
+
 ## Sau MVP — chưa thực hiện
 
 Không đưa các mục sau vào M01–M12:

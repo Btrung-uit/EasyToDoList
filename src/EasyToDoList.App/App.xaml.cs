@@ -167,8 +167,18 @@ public partial class App : Application
 
     private void OnSessionEnding(object sender, SessionEndingCancelEventArgs e)
     {
-        // shortcut: forced Windows shutdown may recover the last 30-second checkpoint; explicit Exit persists exactly.
+        _timer?.Stop();
         _lifecycle?.Stop();
+        try
+        {
+            PomodoroSessionEndCheckpoint.Save(ApplicationDataPaths.DatabasePath, DateTimeOffset.UtcNow);
+            _log?.Write("session-ending-saved");
+        }
+        catch (Exception error)
+        {
+            // A failed final save leaves the existing 30-second checkpoint available for crash recovery.
+            _log?.Write("session-ending-save-failed", error);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
