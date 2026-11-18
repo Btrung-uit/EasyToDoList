@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Content Include="..\..\README.md" Link="README.md" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\Resources\ASSET-LICENSES.md" Link="ASSET-LICENSES.md" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\Resources\ThirdParty\*.txt" Link="third-party-notices\%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="..\..\assets\branding\easytodolist-logo.png">
       <Link>Assets\Branding\easytodolist-logo.png</Link>
     </Resource>
@@ -29,6 +32,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <Version>0.1.0-rc.1</Version>
     <ApplicationIcon>..\..\assets\branding\easytodolist.ico</ApplicationIcon>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>

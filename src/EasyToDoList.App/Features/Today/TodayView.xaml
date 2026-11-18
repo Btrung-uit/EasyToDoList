@@ -39,7 +39,11 @@
           <Border Background="{StaticResource GuildCreamBrush}" TextElement.Foreground="{StaticResource GuildInkBrush}" BorderBrush="{StaticResource GuildParchmentDeepBrush}" BorderThickness="1" Padding="10" Margin="0,4">
             <StackPanel>
               <DockPanel LastChildFill="True">
-                <CheckBox DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Top" IsChecked="{Binding IsCompleting, Mode=OneWay}" Command="{Binding DataContext.CompleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" AutomationProperties.Name="{Binding Title, StringFormat=Hoàn thành: {0}}" ToolTip="Hoàn thành nhiệm vụ; có thể Hoàn tác trong thông báo"/>
+                <CheckBox DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Top" IsChecked="{Binding IsCompleting, Mode=OneWay}" Checked="OnCompleteChecked" AutomationProperties.Name="{Binding Title, StringFormat=Hoàn thành: {0}}" ToolTip="Hoàn thành nhiệm vụ; có thể Hoàn tác trong thông báo">
+                  <CheckBox.Style><Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}"><Style.Triggers>
+                    <DataTrigger Binding="{Binding IsCompleting}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+                  </Style.Triggers></Style></CheckBox.Style>
+                </CheckBox>
                 <TextBlock VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding Title}">
                   <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsCompleting}" Value="True"><Setter Property="TextDecorations" Value="Strikethrough"/><Setter Property="Foreground" Value="{StaticResource GuildMossBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>

@@ -27,7 +27,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore EasyToDoList.sln
+        run: dotnet restore EasyToDoList.sln --runtime win-x64 -p:SelfContained=true
 
       - name: Build
         run: dotnet build EasyToDoList.sln --configuration Release --no-restore -warnaserror
@@ -35,18 +35,19 @@ jobs:
       - name: Test
         run: dotnet test EasyToDoList.sln --configuration Release --no-build
 
-      - name: Publish Windows x64
-        run: >-
-          dotnet publish src/EasyToDoList.App/EasyToDoList.App.csproj
-          --configuration Release
-          --runtime win-x64
-          --self-contained true
-          --output artifacts/publish
+      - name: Package Windows x64
+        shell: pwsh
+        run: |
+          $packageArguments = @{ NoRestore = $true }
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $packageArguments.Version = $env:GITHUB_REF_NAME -replace '^v', ''
+          }
+          ./scripts/package-release.ps1 @packageArguments
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: EasyToDoList-win-x64-${{ github.run_number }}
-          path: artifacts/publish
+          path: artifacts/release
           if-no-files-found: error
           retention-days: 14

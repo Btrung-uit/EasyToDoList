@@ -1,0 +1,2 @@
+# Keep upstream license/notice bytes intact, including their original whitespace.
+Resources/ThirdParty/*.txt -text -whitespace

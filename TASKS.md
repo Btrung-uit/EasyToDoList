@@ -34,7 +34,7 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
 | M10 | Windows lifecycle, tray, notification và startup | Hoàn thành — chốt 18/11/2026 | M04, M05, M06 |
 | M11 | Accessibility, visual polish và asset integration | Hoàn thành — chốt 18/11/2026 | M07–M10 |
-| M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
+| M12 | Installer, release verification và tài liệu sử dụng | Đã triển khai; có RC, chờ release gate thủ công | M11 |
 
 Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
 
@@ -329,24 +329,28 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 
 ### Phạm vi
 
-- [ ] Publish `win-x64` self-contained.
-- [ ] Tạo installer Inno Setup.
-- [ ] Installer tạo shortcut và uninstall sạch executable.
-- [ ] Uninstall không tự xóa database người dùng.
-- [ ] Viết README hướng dẫn sử dụng và vị trí dữ liệu.
-- [ ] Viết manual release checklist.
-- [ ] Test fresh install, upgrade, uninstall và migration.
+- [x] Publish `win-x64` self-contained.
+- [x] Tạo installer Inno Setup.
+- [x] Installer tạo shortcut và uninstall sạch executable.
+- [x] Uninstall không tự xóa database người dùng.
+- [x] Viết README hướng dẫn sử dụng và vị trí dữ liệu.
+- [x] Viết manual release checklist.
+- [x] Test fresh install, upgrade, uninstall và migration.
 - [ ] Test offline, tray, notification, sleep/resume và midnight rollover.
 - [ ] Test crash recovery, DPI và animation/settings.
 - [ ] Đóng các kiểm chứng thủ công còn mở trong checklist M10/M11 trước phát hành; chốt milestone không đồng nghĩa các kiểm chứng này đã pass.
 
 ### Hoàn thành khi
 
-- [ ] `dotnet test` pass toàn bộ.
-- [ ] `dotnet build -c Release -warnaserror` pass.
-- [ ] Installer chạy được trên Windows 11 x64 sạch.
+- [x] `dotnet test` pass toàn bộ.
+- [x] `dotnet build -c Release -warnaserror` pass.
+- [x] Installer chạy được trên Windows 11 x64 sạch.
 - [ ] Không còn lỗi blocker/critical trong release checklist.
-- [ ] Commit: `feat: package EasyToDoList MVP`.
+- [x] Commit: `feat: package EasyToDoList MVP`.
+
+Triển khai 18/11/2026: ứng viên `0.1.0-rc.1`, installer per-user không cần admin, AppId cố định, guard khi app đang chạy và uninstall chỉ xóa startup entry thuộc đúng bản cài. Script tạo installer/portable ZIP/SHA256, kèm README, provenance và runtime notices; release workflow build/test rồi upload artifacts, không tự tạo GitHub Release. Smoke Windows Sandbox sạch build 26100, tắt mạng, không có system .NET đã qua cài mới, nâng cấp/gỡ/cài lại, giữ task/reward/settings/Pomodoro, guard và crash recovery. Fixture nâng cấp dùng cùng payload với registration cũ; migration SQLite từ schema To-do cũ được kiểm thử riêng.
+
+Full Debug/Release 235/235 tests pass (App 82, Core 99, Infrastructure 54), Release build warnings-as-errors 0 warning/error. Smoke tìm ra lỗi UI Automation Toggle không gọi CheckBox.Command; đã sửa Checked event gọi đúng command và có WPF regression đỏ→xanh. Không đổi schema hoặc công thức thưởng. M12 chưa chốt release: DPI/Narrator/audio/performance và các kiểm chứng Windows thật còn mở trong [manual release checklist](docs/testing/manual-release-checklist.md); simulated session-ending/VM crash không được tính là host shutdown/restart thật.
 
 ---
 

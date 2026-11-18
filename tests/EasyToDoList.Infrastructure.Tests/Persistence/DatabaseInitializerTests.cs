@@ -1,11 +1,45 @@
 using EasyToDoList.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using EasyToDoList.Core.Todos;
 
 namespace EasyToDoList.Infrastructure.Tests.Persistence;
 
 public sealed class DatabaseInitializerTests
 {
+    [Fact]
+    public async Task Upgrade_from_todo_schema_preserves_tasks_and_profile_and_is_repeatable()
+    {
+        using var directory = new TemporaryDirectory();
+        var databasePath = Path.Combine(directory.Path, "upgrade.db");
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(
+            new SqliteConnectionStringBuilder { DataSource = databasePath }.ToString()).Options;
+        var todoId = Guid.NewGuid();
+        await using (var previous = new AppDbContext(options))
+        {
+            await previous.GetService<IMigrator>().MigrateAsync("20261112081912_AddTodoRewards");
+            var profile = await previous.PlayerProfiles.SingleAsync();
+            profile.TotalExperience = 125;
+            profile.CoinBalance = 42;
+            var date = new DateOnly(2026, 11, 18);
+            previous.TodoItems.Add(TodoItem.Create(todoId, "Giữ dữ liệu khi nâng cấp", date, date,
+                new DateTimeOffset(2026, 11, 18, 8, 0, 0, TimeSpan.Zero), date));
+            await previous.SaveChangesAsync();
+        }
+        var initializer = new DatabaseInitializer(databasePath);
+        await initializer.InitializeAsync(CancellationToken.None);
+        await initializer.InitializeAsync(CancellationToken.None);
+        await using var upgraded = new AppDbContext(options);
+        var saved = Assert.Single(await upgraded.TodoItems.ToListAsync());
+        Assert.Equal(todoId, saved.Id);
+        Assert.Equal("Giữ dữ liệu khi nâng cấp", saved.Title);
+        Assert.Equal(125, (await upgraded.PlayerProfiles.SingleAsync()).TotalExperience);
+        Assert.Equal(42, (await upgraded.PlayerProfiles.SingleAsync()).CoinBalance);
+        Assert.Empty(await upgraded.Database.GetPendingMigrationsAsync());
+    }
+
     [Fact]
     public async Task Initialize_creates_database_and_single_profile()
     {

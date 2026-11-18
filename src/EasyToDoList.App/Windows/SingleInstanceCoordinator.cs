@@ -10,6 +10,7 @@ namespace EasyToDoList.App.Windows;
 public sealed class SingleInstanceCoordinator : IDisposable
 {
     private readonly Mutex _mutex;
+    private readonly Mutex _installationGuard = new(false, @"Local\EasyToDoList-Running");
     private readonly string _pipeName;
     private readonly CancellationTokenSource _shutdown = new();
     private Task? _listener;
@@ -65,6 +66,7 @@ public sealed class SingleInstanceCoordinator : IDisposable
         _shutdown.Dispose();
         if (IsPrimary) _mutex.ReleaseMutex();
         _mutex.Dispose();
+        _installationGuard.Dispose();
     }
 
     [DllImport("kernel32.dll", SetLastError = true)]

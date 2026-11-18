@@ -6,6 +6,14 @@ namespace EasyToDoList.App.Tests.Bootstrap;
 public sealed class WindowsAdapterTests
 {
     [Fact]
+    public void Running_application_exposes_installation_guard_mutex()
+    {
+        using var coordinator = new SingleInstanceCoordinator("installer-test-" + Guid.NewGuid());
+        Assert.True(Mutex.TryOpenExisting(@"Local\EasyToDoList-Running", out var installationGuard));
+        installationGuard!.Dispose();
+    }
+
+    [Fact]
     public async Task Second_instance_signals_primary_and_does_not_take_ownership()
     {
         var identity = Guid.NewGuid().ToString();

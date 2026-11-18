@@ -32,4 +32,21 @@ blocks a committed task or a Pomodoro transition.
 ## Font and platform resources
 
 Segoe UI is requested from the installed Windows font collection; no font file
-is redistributed. System tray icons come from Windows platform resources.
+is redistributed.
+
+## EasyToDoList branding
+
+The transparent logo was supplied by the project owner on 2026-11-18 as
+`Logo_EasyToDoList.png`. Source and converted Windows icon are in
+`assets/branding/`; the PNG pixels are unchanged. The ICO contains resized
+16/24/32/48/64/128/256 px versions and is used for the executable, window and
+tray. No third-party license or authorship beyond the owner's supplied asset
+is asserted here.
+
+## Bundled software notices
+
+SQLitePCLRaw 2.1.12 (bundle, core, provider and native package) is declared
+Apache-2.0 in its NuGet metadata. Unmodified upstream LICENSE.TXT and NOTICE.TXT
+from https://github.com/ericsink/SQLitePCL.raw/tree/v2.1.12 are shipped under
+`third-party-notices/`. The packaging script also includes the exact .NET runtime
+pack license and third-party notices under `runtime-notices/`.

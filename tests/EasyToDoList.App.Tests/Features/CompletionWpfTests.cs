@@ -249,7 +249,12 @@ public sealed class CompletionWpfTests
             var scrollBeforeCompletion = dashboardScroll.ScrollableHeight;
             var first = today.Items.Single(x => x.Title.StartsWith("Ôn bài"));
             today.EditCommand.Execute(first);
-            await today.CompleteAsync(first);
+            var completionCheckbox = Descendants<CheckBox>(window).Single(control => AutomationProperties.GetName(control) == $"Hoàn thành: {first.Title}");
+            var completionPeer = UIElementAutomationPeer.CreatePeerForElement(completionCheckbox)!;
+            var toggle = Assert.IsAssignableFrom<System.Windows.Automation.Provider.IToggleProvider>(completionPeer.GetPattern(PatternInterface.Toggle));
+            toggle.Toggle();
+            while (!today.CompleteCommand.CanExecute(first)) await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.Equal(50, today.ProgressPercent);
             Assert.False(today.IsEditing);
             Assert.Equal(6, profile.Coins);
