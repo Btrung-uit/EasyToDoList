@@ -27,11 +27,17 @@ public sealed class TodayViewModel : ViewModelBase
     private string? _deadlineError;
     private string? _errorMessage;
     private bool _isLoading;
+    private readonly ITodoHistoryQuery? _history;
+    private int _completedCount;
+    private bool _scheduleExpanded;
+    private string? _statusMessage;
+    private DateTimeOffset _statusUntil;
 
-    public TodayViewModel(ITodoService service, IClock clock, Func<Task>? afterMutation = null, Func<bool>? motionEnabled = null)
+    public TodayViewModel(ITodoService service, IClock clock, Func<Task>? afterMutation = null, Func<bool>? motionEnabled = null, ITodoHistoryQuery? history = null)
     {
         _service = service;
         _clock = clock;
+        _history = history;
         _afterMutation = afterMutation;
         _motionEnabled = motionEnabled ?? (() => true);
         StartDate = clock.LocalToday.ToDateTime(TimeOnly.MinValue);
@@ -45,6 +51,13 @@ public sealed class TodayViewModel : ViewModelBase
     }
 
     public ObservableCollection<TodoRowViewModel> Items { get; } = [];
+    public string DateLabel => _clock.LocalToday.ToString("dd/MM/yyyy");
+    public int CompletedCount => _completedCount;
+    public int TotalCount => CompletedCount + Items.Count(x => !x.IsCompleting);
+    public double ProgressPercent => TotalCount == 0 ? 0 : 100d * CompletedCount / TotalCount;
+    public string ProgressLabel => $"Đã hoàn thành: {CompletedCount}/{TotalCount} nhiệm vụ";
+    public bool ScheduleExpanded { get => _scheduleExpanded; set => SetField(ref _scheduleExpanded, value); }
+    public string? StatusMessage { get => _statusMessage; private set => SetField(ref _statusMessage, value); }
     public ObservableCollection<CompletionFeedback> Feedback { get; } = [];
     public event EventHandler? CompletionCommitted;
     public int ComboCount { get => _comboCount; private set => SetField(ref _comboCount, value); }
@@ -86,17 +99,28 @@ public sealed class TodayViewModel : ViewModelBase
         ErrorMessage = null;
         try
         {
-            var items = await ReadAsync(() => _service.GetTodayAsync(_clock.LocalToday, CancellationToken.None));
-            var ids = items.Select(x => x.Id).ToHashSet();
-            if (_editingId is Guid editingId && !ids.Contains(editingId)) ResetForm();
-            foreach (var old in Items.Where(x => !ids.Contains(x.Id) && !x.IsCompleting).ToArray()) Items.Remove(old);
-            foreach (var item in items)
+            await WriteAsync(async () =>
             {
-                var row = Items.FirstOrDefault(x => x.Id == item.Id);
-                if (row is null) Items.Add(new TodoRowViewModel(item));
-                else row.Update(item);
-            }
-            OnPropertyChanged(nameof(IsEmpty));
+                var date = _clock.LocalToday;
+                var items = await _service.GetTodayAsync(date, CancellationToken.None);
+                if (_history is not null)
+                {
+                    var week = date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+                    var history = await _history.GetWeekAsync(week, CancellationToken.None);
+                    _completedCount = history.Count(x => x.Status == TodoStatus.Completed && x.CompletedDate == date);
+                }
+                var ids = items.Select(x => x.Id).ToHashSet();
+                if (_editingId is Guid editingId && !ids.Contains(editingId)) ResetForm();
+                foreach (var old in Items.Where(x => !ids.Contains(x.Id) && !x.IsCompleting).ToArray()) Items.Remove(old);
+                foreach (var item in items)
+                {
+                    var row = Items.FirstOrDefault(x => x.Id == item.Id);
+                    if (row is null) Items.Add(new TodoRowViewModel(item));
+                    else row.Update(item);
+                }
+                OnPropertyChanged(nameof(IsEmpty));
+                NotifyProgress();
+            });
         }
         catch (Exception)
         {
@@ -117,8 +141,10 @@ public sealed class TodayViewModel : ViewModelBase
         }
 
         ErrorMessage = null;
+        StatusMessage = null;
         try
         {
+            var editing = IsEditing;
             var start = DateOnly.FromDateTime(StartDate!.Value);
             var deadline = DateOnly.FromDateTime(Deadline!.Value);
             if (_editingId is Guid id)
@@ -131,6 +157,8 @@ public sealed class TodayViewModel : ViewModelBase
             }
             ResetForm();
             await LoadAsync();
+            StatusMessage = editing ? "Đã lưu thay đổi nhiệm vụ." : "Đã thêm nhiệm vụ.";
+            _statusUntil = _clock.UtcNow.AddSeconds(4);
         }
         catch (Exception)
         {
@@ -149,6 +177,7 @@ public sealed class TodayViewModel : ViewModelBase
         Title = item.Title;
         StartDate = item.StartDate.ToDateTime(TimeOnly.MinValue);
         Deadline = item.Deadline.ToDateTime(TimeOnly.MinValue);
+        ScheduleExpanded = true;
         OnPropertyChanged(nameof(IsEditing));
     }
 
@@ -156,12 +185,14 @@ public sealed class TodayViewModel : ViewModelBase
     {
         if (row.IsCompleting || !Items.Contains(row) || !_pending.Add(row.Id)) return;
         ErrorMessage = null;
+        StatusMessage = null;
         try
         {
             TodoCompletionResult result;
             try { result = await ReadAsync(() => _service.CompleteAsync(row.Id, CancellationToken.None)); }
-            catch (Exception) { ErrorMessage = "Không thể hoàn thành nhiệm vụ. Hãy thử lại."; return; }
+            catch (Exception) { row.CompletionProgress = 0; ErrorMessage = "Không thể hoàn thành nhiệm vụ. Hãy thử lại."; return; }
             if (_editingId == row.Id) ResetForm();
+            _completedCount++;
             RefreshFeedback();
             if (ComboCount == 0) _comboGeneration++;
             ComboCount++;
@@ -171,6 +202,7 @@ public sealed class TodayViewModel : ViewModelBase
             row.AnimationStartedUtc = _clock.UtcNow;
             row.CompletionProgress = 0;
             if (!MotionEnabled) Items.Remove(row);
+            NotifyProgress();
             NotifyFeedback();
             // Presentation failures cannot undo a committed completion or hide its Undo token.
             try { CompletionCommitted?.Invoke(this, EventArgs.Empty); } catch (Exception) { }
@@ -189,6 +221,7 @@ public sealed class TodayViewModel : ViewModelBase
             try { await WriteAsync(() => _service.UndoCompletionAsync(result.Todo.Id, result.TransactionId, CancellationToken.None)); }
             catch (Exception) { ErrorMessage = "Không thể hoàn tác. Hãy thử lại trong 5 giây."; return; }
             Feedback.Remove(feedback);
+            _completedCount = Math.Max(0, _completedCount - 1);
             var row = Items.FirstOrDefault(x => x.Id == result.Todo.Id);
             if (row is null)
             {
@@ -209,6 +242,7 @@ public sealed class TodayViewModel : ViewModelBase
 
     public void RefreshFeedback()
     {
+        if (StatusMessage is not null && _clock.UtcNow >= _statusUntil) StatusMessage = null;
         if (ComboCount == 0 && Feedback.Count == 0 && !Items.Any(x => x.IsCompleting)) return;
         var now = _clock.UtcNow;
         if (now >= _comboUntil) { ComboCount = 0; ComboProgress = 0; }
@@ -230,6 +264,15 @@ public sealed class TodayViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasFeedback));
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(MascotFrame));
+    }
+
+    private void NotifyProgress()
+    {
+        OnPropertyChanged(nameof(DateLabel));
+        OnPropertyChanged(nameof(CompletedCount));
+        OnPropertyChanged(nameof(TotalCount));
+        OnPropertyChanged(nameof(ProgressPercent));
+        OnPropertyChanged(nameof(ProgressLabel));
     }
 
     private async Task RefreshProfileAsync()
@@ -285,6 +328,7 @@ public sealed class TodayViewModel : ViewModelBase
         DeadlineError = StartDate is null || Deadline is null
             ? "Hãy chọn ngày bắt đầu và hạn chót."
             : Deadline < StartDate ? "Hạn chót không được trước ngày bắt đầu." : null;
+        if (DeadlineError is not null) ScheduleExpanded = true;
         return TitleError is null && DeadlineError is null;
     }
 

@@ -176,7 +176,7 @@ public sealed class CompletionWpfTests
         var profile = new ProfileViewModel(new SqliteProfileQuery(db));
         var settings = new SettingsViewModel(new SqliteSettingsStore(db));
         var today = new TodayViewModel(service, clock, profile.LoadAsync,
-            () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
+            () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled, new SqliteTodoHistoryQuery(db));
         var pomodoro = new PomodoroService(new SqlitePomodoroStore(db), rewards, profiles, unit, new EconomyCalculator(), clock);
         var pomodoroVm = new global::EasyToDoList.App.Features.Pomodoro.PomodoroViewModel();
         var dashboard = new DashboardViewModel(today, new CalendarViewModel(new SqliteTodoHistoryQuery(db), clock), pomodoroVm, profile, settings);
@@ -221,19 +221,32 @@ public sealed class CompletionWpfTests
                     Assert.Equal(320, image.PixelWidth);
                     Assert.Equal(320, image.PixelHeight);
                 }
-            var formFields = Descendants<TextBox>(window).Where(control => AutomationProperties.GetName(control) == "Tên nhiệm vụ")
-                .Cast<FrameworkElement>().Concat(Descendants<DatePicker>(window))
-                .Concat(Descendants<Button>(window).Where(button => Equals(button.Content, "Lưu"))).ToArray();
-            Assert.Equal(4, formFields.Length);
-            Assert.True(formFields.Max(field => field.ActualWidth) - formFields.Min(field => field.ActualWidth) <= 1,
-                $"Editor widths differ: {string.Join(", ", formFields.Select(field => field.ActualWidth))}");
-            Assert.All(formFields, field => Assert.Equal(40, field.ActualHeight));
+            var titleInput = Descendants<TextBox>(window).Single(control => AutomationProperties.GetName(control) == "Tên nhiệm vụ");
+            Assert.True(titleInput.ActualHeight >= 44);
+            Assert.True(titleInput.ActualWidth > 300);
+            Assert.False(today.ScheduleExpanded);
+            SaveImage(window, "dashboard-quest-journal.png");
+            var initialWidth = window.Width;
+            var initialHeight = window.Height;
+            window.Width = 900;
+            window.Height = 600;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(window.IsCompactDashboard);
+            var narrowScroll = (ScrollViewer)window.FindName("DashboardScroll");
+            Assert.Equal(0, narrowScroll.ScrollableWidth);
+            Assert.Equal(0, narrowScroll.ScrollableHeight);
+            Assert.True(titleInput.ActualWidth > 300);
+            SaveImage(window, "dashboard-quest-journal-900.png");
+            window.Width = initialWidth;
+            window.Height = initialHeight;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var dashboardScroll = Descendants<ScrollViewer>(window).Single(view => view.Name == "DashboardScroll");
             var viewportBeforeCompletion = dashboardScroll.ViewportHeight;
             var scrollBeforeCompletion = dashboardScroll.ScrollableHeight;
             var first = today.Items.Single(x => x.Title.StartsWith("Ôn bài"));
             today.EditCommand.Execute(first);
             await today.CompleteAsync(first);
+            Assert.Equal(50, today.ProgressPercent);
             Assert.False(today.IsEditing);
             Assert.Equal(6, profile.Coins);
             Assert.Equal(13, Assert.Single(today.Feedback).Result.EarlyBonusExperience);
@@ -335,10 +348,10 @@ public sealed class CompletionWpfTests
             Assert.False(popup.IsOpen);
             Assert.False(window.Topmost);
             AssertNativeAlpha(window, 255);
-            var compactButton = Assert.Single(Descendants<Button>(window), button => Equals(button.Content, "Thu gọn thành Overlay"));
+            var compactButton = Assert.Single(Descendants<Button>(window), button => Equals(button.Content, "Mở cửa sổ tập trung"));
             Assert.Equal(OverlayMode.Pomodoro, compactButton.CommandParameter);
             Assert.DoesNotContain(Descendants<Button>(window), button => Equals(button.Content, "Thoát") || Equals(button.Content, "Mở đồng hồ"));
-            Assert.DoesNotContain(Descendants<TextBlock>(window), text => text.IsVisible && text.Text is "Sẵn sàng" or "Tập trung" or "Đang chạy");
+            Assert.Contains(Descendants<TextBlock>(window), text => text.IsVisible && text.Text == "Sẵn sàng");
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
             Assert.DoesNotContain(Descendants<Button>(window), button => Equals(button.Content, "Hồ sơ"));
             foreach (var page in new[] { "Today", "Calendar", "Pomodoro", "Settings" })
@@ -466,6 +479,27 @@ public sealed class CompletionWpfTests
             shell.ShowOverlayCommand.Execute(OverlayMode.Pomodoro);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             await CheckDesktopTransparencyAsync(window);
+            shell.ShowDashboardCommand.Execute(null);
+            dashboard.NavigateCommand.Execute("Today");
+            foreach (var row in today.Items.ToArray()) await service.CancelAsync(row.Id, CancellationToken.None);
+            await today.LoadAsync();
+            today.ScheduleExpanded = false;
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(today.IsEmpty);
+            SaveImage(window, "dashboard-quest-journal-empty.png");
+            titleInput = Descendants<TextBox>(window).Single(control => control.IsVisible && AutomationProperties.GetName(control) == "Tên nhiệm vụ");
+            var createFirst = Descendants<Button>(window).Single(button => button.IsVisible && Equals(button.Content, "+ Tạo nhiệm vụ đầu tiên"));
+            createFirst.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.True(titleInput.IsKeyboardFocused);
+            titleInput.Text = "Nhiệm vụ tạo nhanh bằng Enter";
+            var enter = Assert.Single(titleInput.InputBindings.OfType<KeyBinding>(), key => key.Key == Key.Enter);
+            Assert.Same(today.SaveCommand, enter.Command);
+            enter.Command.Execute(null);
+            while (!today.SaveCommand.CanExecute(null)) await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Equal("Nhiệm vụ tạo nhanh bằng Enter", Assert.Single(today.Items).Title);
+            Assert.Equal("Đã thêm nhiệm vụ.", today.StatusMessage);
+            SaveImage(window, "dashboard-quest-journal-added.png");
             listener.Flush();
             Assert.True(string.IsNullOrWhiteSpace(bindingLog.ToString()), bindingLog.ToString());
         }
@@ -519,7 +553,8 @@ public sealed class CompletionWpfTests
             var inside = window.PointToScreen(new Point(16, 16));
             Assert.True(SetCursorPos((int)inside.X, (int)inside.Y));
             await Task.Delay(75);
-            Assert.True(window.IsMouseOver);
+            GetCursorPos(out var actualCursor);
+            Assert.True(window.IsMouseOver, $"Cursor {actualCursor.X},{actualCursor.Y}; expected {inside}; HWND {new System.Windows.Interop.WindowInteropHelper(window).Handle}; hit {WindowFromPoint(actualCursor)}; active {window.IsActive}; bounds {WindowBounds(window)}");
             AssertNativeAlpha(window, 255);
             Descendants<Button>(window).First(button => button.IsVisible).Focus();
             Assert.True(SetCursorPos((int)SystemParameters.WorkArea.Left + 1, (int)SystemParameters.WorkArea.Bottom - 1));
@@ -582,6 +617,8 @@ public sealed class CompletionWpfTests
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out CursorPoint point);
+    [DllImport("user32.dll")]
+    private static extern IntPtr WindowFromPoint(CursorPoint point);
 
     private static System.Drawing.Color CapturePixel(Point point)
     {

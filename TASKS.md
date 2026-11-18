@@ -368,6 +368,16 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 
 Kiểm chứng: 225/225 tests pass ở Debug và Release; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật ở client và thanh tiêu đề, focus bàn phím, các trạng thái nút, preset và đóng/mở nâng cao; native alpha 128/255 và pixel màn hình khi thay nền đỏ/xanh chứng minh xuyên thấu thật. Popup ngoài HWND Overlay, theo khi kéo, tránh mép dưới, dự phòng trái/phải khi thiếu chỗ trên/dưới, đóng khi ẩn và đổi chế độ. Binding/accessibility và ảnh UI không có lỗi. Smoke script M10 đã đổi locator theo UI mới và kiểm tra cú pháp; không chạy lại trên dữ liệu cá nhân. Vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP; máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
 
+## Dashboard Quest Journal — 18/11/2026
+
+- [x] Giữ WPF, pixel art và assets; header gọn, ba cột ưu tiên nhiệm vụ, menu có icon/active và thu gọn dưới 1080 DIP.
+- [x] Nhập nhanh Enter, lịch mở rộng, xác nhận Hủy, trạng thái quest/empty, toast lưu thành công; giữ Hoàn tác và phần thưởng cũ.
+- [x] Daily progress dùng dữ liệu lịch sử thật; completion/Undo/reload/đổi ngày và snapshot tải đồng thời được kiểm thử.
+- [x] EXP bar dùng ngưỡng cấp hiện tại; Pomodoro sidebar dùng chung ViewModel/service với Overlay.
+- [x] Kiểm tra WPF runtime ở 900×600 và kích thước chuẩn, nội dung dài/cuộn, keyboard focus, điều hướng, Pomodoro/Overlay, binding và SQLite tạm.
+
+Kiểm chứng snapshot cuối: 228/228 tests pass (App 81, Core 99, Infrastructure 48); build warnings-as-errors 0 warning/error. Reviewer phát hiện race tải lại/completion; đã có regression đỏ→xanh và sửa bằng gate chung cho snapshot. Detector UI trả `[]`; ảnh runtime đã xem trực quan. Có hai lần kiểm tra chuột desktop 75 ms thất bại; focused và full run cuối đều pass, test giữ diagnostic tọa độ/HWND. Chưa thay thế kiểm thử DPI màn hình thật, Narrator hoặc nhiều màn hình; M10/M11 vẫn giữ trạng thái kiểm thử thủ công đang mở. Chi tiết, danh sách file và cách chạy: [Dashboard Quest Journal](docs/testing/dashboard-quest-journal.md).
+
 ## Sau MVP — chưa thực hiện
 
 Không đưa các mục sau vào M01–M12:

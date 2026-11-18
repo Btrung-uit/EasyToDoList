@@ -84,7 +84,8 @@ public partial class App : Application
             await _lifecycle.InitializeAsync();
             var profile = new ProfileViewModel(new SqliteProfileQuery(_dbContext));
             var today = new TodayViewModel(new TodoService(todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
-                clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
+                clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled,
+                new SqliteTodoHistoryQuery(_dbContext));
             var dashboardPomodoro = new DashboardPomodoroViewModel();
             var dashboard = new DashboardViewModel(today, new CalendarViewModel(new SqliteTodoHistoryQuery(_dbContext), clock),
                 dashboardPomodoro, profile, settings);

@@ -13,6 +13,9 @@ namespace EasyToDoList.App;
 
 public partial class MainWindow : Window
 {
+    public static readonly DependencyProperty IsCompactDashboardProperty = DependencyProperty.Register(
+        nameof(IsCompactDashboard), typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+    public bool IsCompactDashboard { get => (bool)GetValue(IsCompactDashboardProperty); private set => SetValue(IsCompactDashboardProperty, value); }
     private readonly ShellViewModel _viewModel;
     private readonly WindowModeController _modeController;
     private readonly DispatcherTimer _overlayTimer;
@@ -194,6 +197,9 @@ public partial class MainWindow : Window
 
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
     {
+        IsCompactDashboard = ActualWidth < 1080;
+        NavigationColumn.Width = new GridLength(IsCompactDashboard ? 64 : 176);
+        NavigationHeading.Visibility = IsCompactDashboard ? Visibility.Collapsed : Visibility.Visible;
         RepositionFeedbackPopup();
         if (_viewModel.DisplayMode != ShellDisplayMode.Overlay || _modeController.IsApplying) return;
         var area = WindowModeController.GetWorkArea(this);
