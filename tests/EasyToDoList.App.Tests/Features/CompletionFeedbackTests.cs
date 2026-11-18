@@ -7,6 +7,47 @@ namespace EasyToDoList.App.Tests.Features;
 
 public sealed class CompletionFeedbackTests
 {
+    [Fact]
+    public async Task Reload_and_queued_completion_publish_one_consistent_progress_snapshot()
+    {
+        var clock = new Clock();
+        var service = new Service(clock);
+        var vm = new TodayViewModel(service, clock, motionEnabled: () => false, history: service);
+        await vm.LoadAsync();
+        var snapshot = vm.Items.Select(x => x.Item).ToList();
+        service.TodayRead = new TaskCompletionSource<IReadOnlyList<TodoItem>>();
+        service.HistoryRead = new TaskCompletionSource<IReadOnlyList<TodoHistoryEntry>>();
+        var loading = vm.LoadAsync();
+        var completing = vm.CompleteAsync(vm.Items[0]);
+        service.TodayRead.SetResult(snapshot);
+        await service.HistoryStarted.Task;
+        try { Assert.Equal(0, service.CompleteCalls); }
+        finally { service.HistoryRead.SetResult([]); }
+        await Task.WhenAll(loading, completing);
+        Assert.Single(vm.Items);
+        Assert.Equal(1, vm.CompletedCount);
+        Assert.Equal(2, vm.TotalCount);
+        Assert.Equal(50, vm.ProgressPercent);
+    }
+
+    [Fact]
+    public async Task Daily_progress_counts_commits_once_and_undo_restores_it()
+    {
+        var (vm, _, clock) = await CreateAsync();
+        Assert.Equal(2, vm.TotalCount);
+        Assert.Equal(0, vm.ProgressPercent);
+        await vm.CompleteAsync(vm.Items[0]);
+        Assert.Equal(1, vm.CompletedCount);
+        Assert.Equal(50, vm.ProgressPercent);
+        clock.Advance(900);
+        vm.RefreshFeedback();
+        Assert.Equal(2, vm.TotalCount);
+        await vm.UndoAsync(Assert.Single(vm.Feedback));
+        Assert.Equal(0, vm.CompletedCount);
+        Assert.Equal(0, vm.ProgressPercent);
+        Assert.Equal(2, vm.TotalCount);
+    }
+
     [Theory]
     [InlineData(0, "+38 EXP, +6 coin")]
     [InlineData(13, "+38 EXP (sớm +13), +6 coin")]
@@ -194,13 +235,24 @@ public sealed class CompletionFeedbackTests
         public void Advance(int milliseconds) => UtcNow += TimeSpan.FromMilliseconds(milliseconds);
     }
 
-    private sealed class Service(Clock clock) : ITodoService
+    private sealed class Service(Clock clock) : ITodoService, ITodoHistoryQuery
     {
         private readonly List<TodoItem> _items = [Make(clock, "One"), Make(clock, "Two")];
         public TaskCompletionSource<TodoCompletionResult>? Pending { get; set; }
         public bool FailUndo { get; set; }
+        public TaskCompletionSource<IReadOnlyList<TodoItem>>? TodayRead { get; set; }
+        public TaskCompletionSource<IReadOnlyList<TodoHistoryEntry>>? HistoryRead { get; set; }
+        public TaskCompletionSource HistoryStarted { get; } = new();
+        public int CompleteCalls { get; private set; }
+        public Task<IReadOnlyList<TodoHistoryEntry>> GetWeekAsync(DateOnly weekStart, CancellationToken ct)
+        {
+            if (HistoryRead is not null) { HistoryStarted.TrySetResult(); return HistoryRead.Task; }
+            return Task.FromResult<IReadOnlyList<TodoHistoryEntry>>(_items.Where(x => x.Status == TodoStatus.Completed)
+                .Select(x => new TodoHistoryEntry(x.Id, x.Title, x.Status, clock.LocalToday, x.StartDate, x.Deadline, clock.LocalToday, null)).ToList());
+        }
         public Task<TodoCompletionResult> CompleteAsync(Guid id, CancellationToken ct)
         {
+            CompleteCalls++;
             if (Pending is not null) return Pending.Task;
             var item = _items.Single(x => x.Id == id);
             var transaction = Guid.NewGuid();
@@ -214,7 +266,7 @@ public sealed class CompletionFeedbackTests
             return Task.CompletedTask;
         }
         public Task<IReadOnlyList<TodoItem>> GetTodayAsync(DateOnly date, CancellationToken ct) =>
-            Task.FromResult<IReadOnlyList<TodoItem>>(_items.Where(x => x.Status == TodoStatus.Active).ToList());
+            TodayRead?.Task ?? Task.FromResult<IReadOnlyList<TodoItem>>(_items.Where(x => x.Status == TodoStatus.Active).ToList());
         private static TodoItem Make(Clock clock, string title) => TodoItem.Create(Guid.NewGuid(), title, clock.LocalToday, clock.LocalToday, clock.UtcNow, clock.LocalToday);
         public Task<TodoItem> CreateAsync(CreateTodoCommand command, CancellationToken ct) => throw new NotSupportedException();
         public Task<TodoItem> UpdateAsync(UpdateTodoCommand command, CancellationToken ct) => throw new NotSupportedException();

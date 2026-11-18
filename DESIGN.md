@@ -117,7 +117,7 @@ The palette uses warm guild materials, with gold reserved for focus, selection, 
 
 Dashboard uses a header above a three-region board: journey navigation, primary task surface, and narrow status rail. Its window size is capped to the current Windows work area. Overlay uses the same window at a compact fixed width and keeps its two submodes inside one framed surface.
 
-Spacing follows a 4/8/16/24/32 rhythm. Related controls use 8px gaps; panels separate by 24px; the Dashboard canvas uses 32px outer spacing when the work area permits.
+Spacing follows a 4/8/16/24/32 rhythm. Related controls use 8px gaps; Dashboard panels separate by 16 DIP with 20 DIP outer margins. The compact header uses a 22 DIP title. Below 1080 DIP window width, the journey rail collapses from 176 to 64 DIP, retaining icons, tooltips, and accessible names. Quest and status rails scroll independently.
 
 ## Elevation & Depth
 
@@ -148,7 +148,7 @@ Controls use compact three-pixel corners and panels use five-pixel corners. Bord
 
 ### Navigation
 
-Dashboard navigation is a short vertical journey list on parchment. The active entry is distinguished by weight as well as color; M07 will add its interaction states when navigation is wired.
+Dashboard navigation is a short vertical journey list on parchment with consistent line icons. The active entry has a wood background, cream text, and an accessible selected status; existing button styles supply hover, pressed, disabled, and keyboard focus states.
 
 ## Do's and Don'ts
 

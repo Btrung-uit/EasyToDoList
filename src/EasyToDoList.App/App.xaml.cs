@@ -84,7 +84,8 @@ public partial class App : Application
             await _lifecycle.InitializeAsync();
             var profile = new ProfileViewModel(new SqliteProfileQuery(_dbContext));
             var today = new TodayViewModel(new TodoService(todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
-                clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled);
+                clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled,
+                new SqliteTodoHistoryQuery(_dbContext));
             var dashboardPomodoro = new DashboardPomodoroViewModel();
             var dashboard = new DashboardViewModel(today, new CalendarViewModel(new SqliteTodoHistoryQuery(_dbContext), clock),
                 dashboardPomodoro, profile, settings);
@@ -166,8 +167,18 @@ public partial class App : Application
 
     private void OnSessionEnding(object sender, SessionEndingCancelEventArgs e)
     {
-        // shortcut: forced Windows shutdown may recover the last 30-second checkpoint; explicit Exit persists exactly.
+        _timer?.Stop();
         _lifecycle?.Stop();
+        try
+        {
+            PomodoroSessionEndCheckpoint.Save(ApplicationDataPaths.DatabasePath, DateTimeOffset.UtcNow);
+            _log?.Write("session-ending-saved");
+        }
+        catch (Exception error)
+        {
+            // A failed final save leaves the existing 30-second checkpoint available for crash recovery.
+            _log?.Write("session-ending-save-failed", error);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -32,8 +32,8 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 | M07 | Dashboard, To-do UI, lịch sử và Settings | Hoàn thành | M04, M06 |
 | M08 | Compact Overlay và Pomodoro UI | Hoàn thành | M05, M06 |
 | M09 | Animation hoàn thành, combo, Undo và reward feedback | Hoàn thành | M03, M07, M08 |
-| M10 | Windows lifecycle, tray, notification và startup | Đã triển khai; chờ kiểm thử Windows thủ công | M04, M05, M06 |
-| M11 | Accessibility, visual polish và asset integration | Đã triển khai; chờ kiểm thử visual/accessibility thủ công | M07–M10 |
+| M10 | Windows lifecycle, tray, notification và startup | Hoàn thành — chốt 18/11/2026 | M04, M05, M06 |
+| M11 | Accessibility, visual polish và asset integration | Hoàn thành — chốt 18/11/2026 | M07–M10 |
 | M12 | Installer, release verification và tài liệu sử dụng | Chưa bắt đầu | M11 |
 
 Đối chiếu 16/11/2026: M07 và M08 đã merge qua PR #19/#20; M09 đã triển khai ở commit `22d482f` (chưa merge vào `origin/main` tại thời điểm bắt đầu M10). Nhánh M10 kế thừa snapshot M09, không thực hiện merge.
@@ -267,6 +267,8 @@ Tài liệu này là bảng điều phối triển khai MVP. Khi bắt đầu m�
 
 **Mục tiêu:** Ứng dụng cư xử đúng như một Windows utility khi chạy nền, sleep/resume và khởi động lại.
 
+**Chốt 18/11/2026 theo yêu cầu người dùng:** hoàn tất triển khai, gồm sửa lưu Pomodoro khi Windows session kết thúc. Người dùng xác nhận Sleep có tạm dừng. Các checkbox kiểm chứng thủ công chưa tick dưới đây được chuyển sang release gate M12, không được coi là đã pass; giữ nguyên evidence chi tiết trong [M10 checklist](docs/testing/m10-windows-checklist.md).
+
 ### Phạm vi
 
 - [x] System tray menu: Overlay, Dashboard, Exit.
@@ -295,6 +297,8 @@ Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không
 
 **Mục tiêu:** Hoàn thiện Guild Quest Board UI và tích hợp ambient/mascot mà không làm giảm khả năng sử dụng.
 
+**Chốt 18/11/2026 theo yêu cầu người dùng:** hoàn tất triển khai, gồm dashboard Quest Journal và logo mới. Các checkbox thủ công chưa tick được chuyển sang release gate M12; việc chốt không thay thế kiểm chứng DPI thật, Narrator, High Contrast, âm thanh và profiling dài hạn.
+
 ### Phạm vi
 
 - [x] Tích hợp normalized mascot frames `320×320`.
@@ -317,7 +321,7 @@ Kiểm tra ngày 16/11/2026: 192/192 tests pass; build warnings-as-errors không
 - [x] `dotnet build -c Release -warnaserror` và `dotnet test` pass.
 - [x] Commit: `feat: finish medieval visual and accessibility pass`.
 
-Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Không đánh dấu hoàn thành M11 trước khi các kiểm tra thủ công pass.
+Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility checklist](docs/testing/m11-visual-accessibility-checklist.md). Ảnh 96/144/192 DPI là mô phỏng raster; chưa thay thế kiểm thử DPI màn hình thật, Narrator, chất lượng loa và profiling Windows ổn định. Trạng thái triển khai đã chốt theo quyết định 18/11/2026; các kiểm tra còn lại tiếp tục là release gate M12.
 
 ## M12 — Installer và release verification
 
@@ -334,6 +338,7 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [ ] Test fresh install, upgrade, uninstall và migration.
 - [ ] Test offline, tray, notification, sleep/resume và midnight rollover.
 - [ ] Test crash recovery, DPI và animation/settings.
+- [ ] Đóng các kiểm chứng thủ công còn mở trong checklist M10/M11 trước phát hành; chốt milestone không đồng nghĩa các kiểm chứng này đã pass.
 
 ### Hoàn thành khi
 
@@ -367,6 +372,28 @@ Kiểm chứng triển khai và phần còn lại: [M11 visual/accessibility che
 - [x] Regression CI dùng tọa độ Windows runner để phân biệt chạm mép với chồng lấn có diện tích; vẫn phát hiện chồng lấn 1 pixel.
 
 Kiểm chứng: 225/225 tests pass ở Debug và Release; build Debug/Release warnings-as-errors đều 0 warning/error. Runtime dùng SQLite tạm, không thay đổi database cá nhân. Đã kiểm tra hover/leave thật ở client và thanh tiêu đề, focus bàn phím, các trạng thái nút, preset và đóng/mở nâng cao; native alpha 128/255 và pixel màn hình khi thay nền đỏ/xanh chứng minh xuyên thấu thật. Popup ngoài HWND Overlay, theo khi kéo, tránh mép dưới, dự phòng trái/phải khi thiếu chỗ trên/dưới, đóng khi ẩn và đổi chế độ. Binding/accessibility và ảnh UI không có lỗi. Smoke script M10 đã đổi locator theo UI mới và kiểm tra cú pháp; không chạy lại trên dữ liệu cá nhân. Vị trí/giới hạn dùng monitor hiện tại với chuyển đổi pixel/DIP; máy chỉ có một màn hình nên chưa xác minh thực tế trên màn hình phụ. Không thay đổi schema, cách tính EXP/coin hay thời gian Undo.
+
+## Dashboard Quest Journal — 18/11/2026
+
+- [x] Giữ WPF, pixel art và assets; header gọn, ba cột ưu tiên nhiệm vụ, menu có icon/active và thu gọn dưới 1080 DIP.
+- [x] Nhập nhanh Enter, lịch mở rộng, xác nhận Hủy, trạng thái quest/empty, toast lưu thành công; giữ Hoàn tác và phần thưởng cũ.
+- [x] Daily progress dùng dữ liệu lịch sử thật; completion/Undo/reload/đổi ngày và snapshot tải đồng thời được kiểm thử.
+- [x] EXP bar dùng ngưỡng cấp hiện tại; Pomodoro sidebar dùng chung ViewModel/service với Overlay.
+- [x] Kiểm tra WPF runtime ở 900×600 và kích thước chuẩn, nội dung dài/cuộn, keyboard focus, điều hướng, Pomodoro/Overlay, binding và SQLite tạm.
+
+Kiểm chứng snapshot cuối: 228/228 tests pass (App 81, Core 99, Infrastructure 48); build warnings-as-errors 0 warning/error. Reviewer phát hiện race tải lại/completion; đã có regression đỏ→xanh và sửa bằng gate chung cho snapshot. Detector UI trả `[]`; ảnh runtime đã xem trực quan. Có hai lần kiểm tra chuột desktop 75 ms thất bại; focused và full run cuối đều pass, test giữ diagnostic tọa độ/HWND. Chưa thay thế kiểm thử DPI màn hình thật, Narrator hoặc nhiều màn hình; M10/M11 vẫn giữ trạng thái kiểm thử thủ công đang mở. Chi tiết, danh sách file và cách chạy: [Dashboard Quest Journal](docs/testing/dashboard-quest-journal.md).
+
+## App logo — 18/11/2026
+
+- [x] Tích hợp PNG trong suốt do người dùng cung cấp vào header 52×52 DIP, giữ chiều cao header.
+- [x] ICO 7 kích thước dùng cho executable, cửa sổ/taskbar và tray; icon tray được giải phóng khi Exit.
+- [x] Release 228/228 tests pass, build warnings-as-errors 0 warning/error; xem ảnh WPF và kiểm tra layout 900×600. Debug bị instance đang chạy khóa executable nên kiểm chứng Release, không đóng app cá nhân. Nguồn asset: [branding](assets/branding/README.md).
+
+## Pomodoro shutdown persistence — 18/11/2026
+
+- [x] Shutdown/logoff dừng tick và lưu Paused đồng bộ bằng kết nối SQLite riêng, busy timeout 2 giây. Restart dùng cùng đường SessionEnding.
+- [x] Giữ phiên đã pause, không tính thời gian offline hay phát thưởng trong shutdown; nếu lưu cuối thất bại vẫn phục hồi checkpoint định kỳ và không phủ quyết Windows.
+- [x] 5 regression tests trên file SQLite thật; full suite 233/233 pass (App 81, Core 99, Infrastructure 53), build warnings-as-errors 0 warning/error. WPF regression pass; chưa tự shutdown/restart máy và chưa đóng M10. Chi tiết: [M10 checklist](docs/testing/m10-windows-checklist.md).
 
 ## Sau MVP — chưa thực hiện
 

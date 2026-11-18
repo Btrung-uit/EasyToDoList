@@ -1,6 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Resource Include="..\..\assets\branding\easytodolist-logo.png">
+      <Link>Assets\Branding\easytodolist-logo.png</Link>
+    </Resource>
+    <Resource Include="..\..\assets\branding\easytodolist.ico">
+      <Link>Assets\Branding\easytodolist.ico</Link>
+    </Resource>
+    <EmbeddedResource Include="..\..\assets\branding\easytodolist.ico" LogicalName="Branding.AppIcon" />
     <EmbeddedResource Include="..\..\assets\audio\*.wav">
       <LogicalName>Audio.%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
@@ -22,6 +29,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>..\..\assets\branding\easytodolist.ico</ApplicationIcon>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

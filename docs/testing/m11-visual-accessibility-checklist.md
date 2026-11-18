@@ -50,7 +50,7 @@ domain or persistence behavior changed in this fix.
 
 ## Remaining interactive Windows checks
 
-Do not mark M11 complete until these pass on the final Release build.
+User decision on 2026-11-18 closes M11 implementation. The unchecked items remain M12 release gates and must pass on the final Release build before release; milestone closure is not test evidence.
 
 - [ ] At actual Windows scale 100%, 150%, 200%: Dashboard and both Overlay modes
   remain readable; scroll, resize and move between monitors without inaccessible

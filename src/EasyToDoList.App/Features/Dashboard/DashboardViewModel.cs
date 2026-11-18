@@ -12,6 +12,7 @@ namespace EasyToDoList.App.Features.Dashboard;
 public sealed class DashboardViewModel : ViewModelBase
 {
     private object _current;
+    public string SelectedSection => Current == Today ? "Today" : Current == Calendar ? "Calendar" : Current == Pomodoro ? "Pomodoro" : "Settings";
 
     public DashboardViewModel(
         TodayViewModel today,
@@ -30,7 +31,7 @@ public sealed class DashboardViewModel : ViewModelBase
     public PomodoroViewModel Pomodoro { get; }
     public ProfileViewModel Profile { get; }
     public SettingsViewModel Settings { get; }
-    public object Current { get => _current; private set => SetField(ref _current, value); }
+    public object Current { get => _current; private set { if (SetField(ref _current, value)) OnPropertyChanged(nameof(SelectedSection)); } }
     public ICommand NavigateCommand { get; }
 
     public async Task InitializeAsync()

@@ -1,5 +1,7 @@
 # M10 — Windows 11 manual checks
 
+**Quyết định 18/11/2026:** người dùng chốt M10 về triển khai. Các mục `[ ]` tiếp tục là kiểm chứng trước phát hành M12; không đánh dấu pass khi chưa có evidence. Những nhận định “chưa đóng M10” trong phần lịch sử dưới đây phản ánh thời điểm kiểm tra cũ.
+
 Chạy bản Release hiện tại sau khi tự thoát phiên EasyToDoList đang dùng. Không chạy hai phiên bản khác nhau trên cùng database để kiểm thử.
 
 - [x] Mở Dashboard, chuyển Overlay, đóng bằng X: tiến trình còn sống và tray có Overlay / Dashboard / Exit. Cả ba mục hoạt động; double-click tray mở Dashboard.
@@ -12,6 +14,17 @@ Chạy bản Release hiện tại sau khi tự thoát phiên EasyToDoList đang 
 - [ ] Đăng xuất/đăng nhập thật để xác nhận Windows tự mở app ở tray — người dùng chọn để kiểm thử sau ngày 17/11/2026.
 - [x] Exit khi Focus đang chạy: tiến trình biến mất; mở lại thấy Paused và giữ nguyên thời gian còn lại. Exit từ tray trả exit code 0; Exit từ Dashboard cũng kết thúc process.
 - [ ] Windows shutdown/logoff thật: app không phủ quyết yêu cầu của Windows — để kiểm thử sau cùng bước đăng xuất.
+
+## Sửa persistence shutdown/restart — 18/11/2026
+
+- Handler `SessionEnding` trước đây chỉ dừng lifecycle, chưa lưu trạng thái cuối. Hiện dừng timer/lifecycle rồi lưu Paused bằng transaction SQLite đồng bộ, connection/context riêng; busy timeout 2 giây để tránh chờ database lâu khi Windows tắt.
+- Dùng domain Pause hiện có cho phiên Running còn thời gian. Phiên đã Paused/Awaiting/Stopped/Skipped được giữ nguyên. Nếu deadline đã qua nhưng completion chưa commit, giữ checkpoint cũ ở Paused để không phát thưởng ngoài luồng timer.
+- Nếu save thất bại, không hủy yêu cầu shutdown; log `session-ending-save-failed` và giữ checkpoint định kỳ cho startup recovery. Save thành công ghi `session-ending-saved`. Không thêm schema, timer hay cơ chế thưởng mới.
+- Test SQLite trên file tạm bao phủ Focus/nghỉ, shutdown rồi mở lại sau một ngày, Resume, lưu lặp, phiên User-paused, deadline quá hạn và database bị khóa. Không dùng database cá nhân để thử ghi.
+- Kiểm chứng 18/11/2026: 5/5 test mới và 233/233 full tests pass; build warnings-as-errors 0 warning/error. Full suite có WPF runtime regression; chưa phát tín hiệu shutdown/logoff thật cho Windows.
+- Người dùng đã báo Sleep có tạm dừng; chưa đủ evidence để đánh dấu mọi biến thể Dashboard/tray và thời gian ngủ của checklist trên.
+
+Kiểm tra thủ công còn cần: chạy Focus 1–2 phút, ghi thời gian, restart/shutdown Windows theo ý người dùng; mở app mới và kiểm tra Paused với thời gian gần lúc tắt, không tính thời gian offline hoặc thêm EXP/coin. Chọn Tiếp tục để xác nhận timer chạy từ thời gian đã lưu. Xem log nêu trên để phân biệt save cuối với fallback checkpoint. Không đánh dấu shutdown/restart pass chỉ từ test clock giả.
 
 ## Evidence ngày 17/11/2026
 

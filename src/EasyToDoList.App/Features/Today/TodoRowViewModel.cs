@@ -10,12 +10,13 @@ public sealed class TodoRowViewModel(TodoItem item) : ViewModelBase
     public Guid Id => Item.Id;
     public string Title => Item.Title;
     public DateOnly Deadline => Item.Deadline;
+    public string StatusLabel => IsCompleting ? "Đã hoàn thành" : Item.Status == TodoStatus.Overdue ? "Quá hạn" : "Chưa hoàn thành";
     public DateTimeOffset? AnimationStartedUtc { get; internal set; }
     public bool IsCompleting => AnimationStartedUtc is not null;
     public double CompletionProgress
     {
         get => _completionProgress;
-        internal set { SetField(ref _completionProgress, value); OnPropertyChanged(nameof(IsCompleting)); }
+        internal set { SetField(ref _completionProgress, value); OnPropertyChanged(nameof(IsCompleting)); OnPropertyChanged(nameof(StatusLabel)); }
     }
 
     internal void Update(TodoItem value)
@@ -23,5 +24,6 @@ public sealed class TodoRowViewModel(TodoItem item) : ViewModelBase
         Item = value;
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Deadline));
+        OnPropertyChanged(nameof(StatusLabel));
     }
 }
