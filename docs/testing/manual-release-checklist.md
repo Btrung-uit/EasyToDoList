@@ -1,6 +1,6 @@
 # M12 — Release candidate checklist
 
-Candidate: **0.1.0-rc.1**, Windows 11 x64. Implementation and local packaging do not by themselves authorize a public release. Unchecked gates below remain open.
+Current candidate: **0.1.0-rc.2**, Windows 11 x64. The 18/11 verification record below describes rc.1; later records identify their own artifacts. Implementation and local packaging do not by themselves authorize a public release. Unchecked gates below remain open.
 
 ## Build and artifacts
 
@@ -23,7 +23,7 @@ Run on Windows Sandbox with networking and clipboard sharing disabled. The launc
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer-sandbox.ps1 `
-  -Installer 'artifacts/release/0.1.0-rc.1/EasyToDoList-0.1.0-rc.1-win-x64-setup.exe' `
+  -Installer 'artifacts/release/0.1.0-rc.2/EasyToDoList-0.1.0-rc.2-win-x64-setup.exe' `
   -PublishDirectory '<self-contained publish directory printed by package-release.ps1>' `
   -CompilerPath '<path to Inno Setup 6 ISCC.exe>'
 ```
@@ -69,3 +69,12 @@ These are carried forward from [M10](m10-windows-checklist.md) and [M11](m11-vis
 - Portable ZIP SHA256: `e486a8ba5a3125d95a0d13ddbe91404ab86b7cc3149d9a864d4a4a0515314666`.
 - Runtime smoke discovered that UI Automation Toggle changed the checkbox without executing its Command. The WPF IToggleProvider regression failed at 0% progress before the Checked-event fix and passed afterward; final installed-app smoke confirms persisted completion/rewards.
 - Independent read-only review found no actionable defect in the implementation snapshot. No personal application database was used for installation tests. The final installer is unsigned; no stable/public release, push or merge was performed. Physical/interactive and GitHub-execution gates above remain open; M12 release completion is not claimed.
+
+## RC.2 verification — 19/11/2026
+
+- Version `0.1.0-rc.2` batches task reminders at startup/day rollover instead of notifying on each creation. It reuses the Dashboard completion toast in both modes and removes the old crack/burst decorator. Reward/Undo and storage are unchanged.
+- New notification regression failed before the patch (two creation-triggered reminders), then passed. Full suite **238/238 pass** (App 85, Core 99, Infrastructure 54); Release warnings-as-errors build has **0 warnings/errors**. WPF asserts strikethrough in Dashboard and Overlay and still validates the shared popup/Undo behavior; rendered images were inspected.
+- Exact candidate smoke: **passed, 8/8 groups**, Windows Sandbox **10.0.26100.0**. Local evidence: `artifacts/sandbox/8215fca8f4a744e696d954a60f3a184a/evidence/result.json`; completion `2026-11-19T02:35:07.5505474Z`.
+- Installer SHA256: `14fb3a1ba894db5a63b4d92408bd91c2361752e408680c2726cb347cd6bafec1`.
+- Portable SHA256: `47a9415f6ff906c30666eb72aff35492f2f11c4d561bb246b4231bef42be08e3`.
+- Personal portable rc.1 was not closed or modified. Exit it via tray before running rc.2, since single-instance otherwise activates the old process. The installer remains unsigned and the unchecked physical release gates above are unchanged.

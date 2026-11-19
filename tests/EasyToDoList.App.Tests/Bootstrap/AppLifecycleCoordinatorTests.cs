@@ -9,6 +9,56 @@ namespace EasyToDoList.App.Tests.Bootstrap;
 public sealed class AppLifecycleCoordinatorTests
 {
     [Fact]
+    public async Task Adding_tasks_after_startup_never_triggers_a_new_windows_reminder_that_day()
+    {
+        var f = new Fixture();
+        await f.Lifecycle.InitializeAsync();
+        f.Todos.Add(DueToday(f));
+        await f.Lifecycle.TickAsync();
+        f.Todos.Add(DueToday(f));
+        await f.Lifecycle.TickAsync();
+        Assert.Empty(f.Notifications);
+        f.Clock.LocalToday = f.Clock.LocalToday.AddDays(1);
+        await f.Lifecycle.TickAsync();
+        Assert.Single(f.Notifications);
+        Assert.Contains("2 nhiệm vụ", f.Notifications[0]);
+        await f.Lifecycle.TickAsync();
+        Assert.Single(f.Notifications);
+    }
+
+    [Fact]
+    public async Task Startup_reminder_is_one_summary_and_does_not_expand_with_each_new_task()
+    {
+        var f = new Fixture();
+        f.Todos.Add(DueToday(f));
+        f.Todos.Add(DueToday(f));
+        await f.Lifecycle.InitializeAsync();
+        await f.Lifecycle.TickAsync();
+        Assert.Single(f.Notifications);
+        Assert.Contains("2 nhiệm vụ", f.Notifications[0]);
+        f.Todos.Add(DueToday(f));
+        await f.Lifecycle.TickAsync();
+        Assert.Single(f.Notifications);
+    }
+
+    [Fact]
+    public async Task Failed_task_summary_retries_without_marking_the_batch_delivered()
+    {
+        var f = new Fixture();
+        f.Todos.Add(DueToday(f));
+        await f.Lifecycle.InitializeAsync();
+        f.FailNotification = true;
+        await Assert.ThrowsAsync<IOException>(() => f.Lifecycle.TickAsync());
+        f.FailNotification = false;
+        await f.Lifecycle.TickAsync();
+        await f.Lifecycle.TickAsync();
+        Assert.Single(f.Notifications);
+    }
+
+    private static TodoItem DueToday(Fixture f) => TodoItem.Create(Guid.NewGuid(), "private title",
+        f.Clock.LocalToday, f.Clock.LocalToday, f.Clock.UtcNow, f.Clock.LocalToday);
+
+    [Fact]
     public async Task Startup_recovers_then_reconciles_and_midnight_reconciles_once()
     {
         var f = new Fixture();
@@ -41,10 +91,10 @@ public sealed class AppLifecycleCoordinatorTests
     public async Task Notifications_obey_independent_settings_and_do_not_repeat_or_run_after_stop()
     {
         var f = new Fixture();
-        await f.Lifecycle.InitializeAsync();
         f.Settings = AppSettings.Default with { DueNotificationsEnabled = false };
         f.Todos.Add(TodoItem.Create(Guid.NewGuid(), "private title", f.Clock.LocalToday, f.Clock.LocalToday, f.Clock.UtcNow, f.Clock.LocalToday));
         f.Todos.Add(TodoItem.Create(Guid.NewGuid(), "private title", f.Clock.LocalToday.AddDays(-2), f.Clock.LocalToday.AddDays(-1), f.Clock.UtcNow, f.Clock.LocalToday));
+        await f.Lifecycle.InitializeAsync();
         f.Pomodoro.Current = Running() with { RemainingSeconds = 0 };
         await f.Lifecycle.TickAsync();
         await f.Lifecycle.TickAsync();
@@ -90,9 +140,9 @@ public sealed class AppLifecycleCoordinatorTests
     public async Task Old_overdue_items_do_not_notify_again_at_each_midnight()
     {
         var f = new Fixture();
-        await f.Lifecycle.InitializeAsync();
         f.Todos.Add(TodoItem.Create(Guid.NewGuid(), "private", f.Clock.LocalToday.AddDays(-2),
             f.Clock.LocalToday.AddDays(-1), f.Clock.UtcNow, f.Clock.LocalToday));
+        await f.Lifecycle.InitializeAsync();
         await f.Lifecycle.TickAsync();
         f.Clock.LocalToday = f.Clock.LocalToday.AddDays(1);
         await f.Lifecycle.TickAsync();

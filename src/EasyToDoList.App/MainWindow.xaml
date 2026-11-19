@@ -196,17 +196,21 @@
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <today:CompletionSurface Progress="{Binding CompletionProgress}"><Grid Margin="0,4">
+                                        <Grid Margin="0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock VerticalAlignment="Center" Text="{Binding Title}" TextWrapping="Wrap" />
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding Title}" TextWrapping="Wrap">
+                                                <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCompleting}" Value="True"><Setter Property="TextDecorations" Value="Strikethrough"/><Setter Property="Foreground" Value="{StaticResource GuildMossBrush}"/></DataTrigger>
+                                                </Style.Triggers></Style></TextBlock.Style>
+                                            </TextBlock>
                                             <Button Grid.Column="1" Margin="8,0,0,0"
                                                     Command="{Binding DataContext.Dashboard.Today.CompleteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" Content="Xong"
                                                     Style="{StaticResource OverlayButtonStyle}" />
-                                        </Grid></today:CompletionSurface>
+                                        </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>

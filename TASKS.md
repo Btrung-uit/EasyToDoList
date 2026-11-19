@@ -399,6 +399,17 @@ Kiểm chứng snapshot cuối: 228/228 tests pass (App 81, Core 99, Infrastruct
 - [x] Giữ phiên đã pause, không tính thời gian offline hay phát thưởng trong shutdown; nếu lưu cuối thất bại vẫn phục hồi checkpoint định kỳ và không phủ quyết Windows.
 - [x] 5 regression tests trên file SQLite thật; full suite 233/233 pass (App 81, Core 99, Infrastructure 53), build warnings-as-errors 0 warning/error. WPF regression pass; chưa tự shutdown/restart máy và chưa đóng M10. Chi tiết: [M10 checklist](docs/testing/m10-windows-checklist.md).
 
+## Sửa nhắc việc và feedback hoàn thành — 19/11/2026
+
+- [x] Không gửi thông báo Windows theo từng lần thêm nhiệm vụ. Chụp tập nhiệm vụ có sẵn trước khi mở UI và khi đổi ngày; mỗi loại đến hạn/quá hạn gửi tối đa một bản tổng hợp trong ngày của phiên chạy. Mở lại app có thể có bản nhắc đầu phiên mới.
+- [x] Giữ tùy chọn thông báo độc lập, retry khi gửi lỗi, không lặp nhắc quá hạn cũ và không ảnh hưởng thông báo/kết thúc Pomodoro.
+- [x] Bỏ CompletionSurface nứt/vỡ khỏi Dashboard và Overlay; tái dùng toast hiệp sĩ/EXP/Coin/Hoàn tác chung, tên nhiệm vụ gạch ngang ngắn trước khi ẩn. Giữ reward, Combo, Reduced Motion và cửa sổ Undo hiện có.
+- [x] Thêm regression cho task mới trước/sau tick đầu, tổng hợp startup và retry; cập nhật WPF proof cho trạng thái hoàn thành ở cả hai chế độ.
+
+Ứng viên kế tiếp `0.1.0-rc.2`. Không sửa schema hoặc dữ liệu cá nhân; không tự đóng bản portable `rc.1` đang chạy. Release gate vật lý của M12 vẫn giữ nguyên.
+
+Kiểm chứng: 238/238 tests pass (App 85, Core 99, Infrastructure 54); Release build 0 warning/error. Đã xem render Dashboard/Overlay và xác nhận gạch ngang cùng toast không còn nứt/vỡ. Bộ cài/portable `rc.2` đã qua 8/8 nhóm smoke Sandbox sạch; SHA256 đối chiếu manifest. Regression mới đã tái hiện báo lặp trước fix và xanh sau fix.
+
 ## Sau MVP — chưa thực hiện
 
 Không đưa các mục sau vào M01–M12:

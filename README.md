@@ -4,7 +4,7 @@
 
 ## Cài đặt và mở ứng dụng
 
-- Hỗ trợ Windows 11 x64. Bản `0.1.0-rc.1` là ứng viên kiểm thử, chưa phải bản phát hành ổn định.
+- Hỗ trợ Windows 11 x64. Bản `0.1.0-rc.2` là ứng viên kiểm thử, chưa phải bản phát hành ổn định.
 - Chạy `EasyToDoList-<version>-win-x64-setup.exe`. Installer cài cho người dùng hiện tại, không yêu cầu quyền quản trị hoặc cài .NET trước.
 - Mở **EasyToDoList** từ Start Menu; shortcut Desktop là tùy chọn.
 - Bản portable: giải nén toàn bộ ZIP vào một thư mục có quyền ghi rồi chạy `EasyToDoList.App.exe`. Không chỉ chép riêng file EXE.
@@ -17,6 +17,8 @@
 - **Lịch sử:** xem công việc theo tuần.
 - **Pomodoro:** chọn preset/cấu hình hợp lệ, bắt đầu, tạm dừng hoặc tiếp tục. Hết phiên chờ bạn bắt đầu phiên tiếp theo. **Mở cửa sổ tập trung** chuyển sang Overlay mà không tạo timer khác.
 - **Cài đặt:** âm lượng, từng âm báo, animation, Reduced Motion, thông báo và khởi động cùng Windows.
+- Thông báo Windows về nhiệm vụ là bản tổng hợp cho việc có sẵn khi mở app hoặc đổi ngày, tối đa một bản mỗi loại trong ngày của phiên chạy. Thêm việc mới chỉ hiện toast trong app; không bật thông báo Windows ngay. Mở lại app có thể hiện bản nhắc đầu phiên mới. Pomodoro vẫn thông báo khi hết phiên.
+- Dashboard và Overlay dùng chung toast hiệp sĩ/EXP/Coin/Hoàn tác khi hoàn thành; tên nhiệm vụ gạch ngang ngắn trước khi ẩn. Không còn hiệu ứng nứt/vỡ.
 - Đóng bằng **X** chỉ ẩn vào tray. Double-click tray mở Dashboard; **tray → Exit** mới thoát hẳn. App phải còn chạy để đếm giờ và gửi thông báo.
 - Sau Sleep hoặc mở lại sau shutdown/crash, phiên được khôi phục Paused; thời gian máy tắt không tính là tập trung. Forced kill/mất điện có thể khôi phục từ checkpoint cũ khoảng 30 giây.
 
@@ -35,7 +37,7 @@
 Đối chiếu SHA256 với `SHA256SUMS.txt` do cùng lượt build tạo ra:
 
 ```powershell
-Get-FileHash .\EasyToDoList-0.1.0-rc.1-win-x64-setup.exe -Algorithm SHA256
+Get-FileHash .\EasyToDoList-0.1.0-rc.2-win-x64-setup.exe -Algorithm SHA256
 ```
 
 Bản ứng viên chưa có chữ ký số; Windows có thể hiện cảnh báo nhà phát hành. Kiểm tra nguồn tải và hash trước khi quyết định chạy. Nếu app đang chạy, installer yêu cầu thoát bằng tray → Exit, không ép đóng phiên Pomodoro.

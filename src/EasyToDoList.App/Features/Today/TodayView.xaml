@@ -1,4 +1,4 @@
-<UserControl x:Class="EasyToDoList.App.Features.Today.TodayView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:EasyToDoList.App.Features.Today" Language="vi-VN" FontSize="14">
+<UserControl x:Class="EasyToDoList.App.Features.Today.TodayView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Language="vi-VN" FontSize="14">
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <StackPanel>
@@ -35,7 +35,7 @@
     </StackPanel>
     <Grid Grid.Row="2">
       <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="Nhiệm vụ hôm nay" ItemsSource="{Binding Items}" Background="Transparent" BorderThickness="0" Padding="0">
-        <ListBox.ItemTemplate><DataTemplate><local:CompletionSurface Progress="{Binding CompletionProgress}">
+        <ListBox.ItemTemplate><DataTemplate>
           <Border Background="{StaticResource GuildCreamBrush}" TextElement.Foreground="{StaticResource GuildInkBrush}" BorderBrush="{StaticResource GuildParchmentDeepBrush}" BorderThickness="1" Padding="10" Margin="0,4">
             <StackPanel>
               <DockPanel LastChildFill="True">
@@ -57,7 +57,7 @@
               </DockPanel>
             </StackPanel>
           </Border>
-        </local:CompletionSurface></DataTemplate></ListBox.ItemTemplate>
+        </DataTemplate></ListBox.ItemTemplate>
       </ListBox>
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" Focusable="False" Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
       <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">

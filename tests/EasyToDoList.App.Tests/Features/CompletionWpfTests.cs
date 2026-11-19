@@ -271,7 +271,9 @@ public sealed class CompletionWpfTests
             Assert.InRange(root.ActualHeight - toastBounds.Bottom, 15, 17);
             SaveImage(window, "m09-dashboard.png");
             SaveImage(window, "todo-completion-toast-dashboard.png");
-            Assert.Contains(Descendants<CompletionSurface>(window), x => x.Progress > 0);
+            Assert.True(first.IsCompleting);
+            var completedTitle = Descendants<TextBlock>(window).Single(text => text.IsVisible && text.Text == first.Title);
+            Assert.Contains(completedTitle.TextDecorations, decoration => decoration.Location == TextDecorationLocation.Strikethrough);
             var mascot = Descendants<Image>(window).Single(x => x.IsVisible && AutomationProperties.GetName(x).StartsWith("Hiệp sĩ"));
             Assert.NotNull(mascot.Source);
 
@@ -280,6 +282,8 @@ public sealed class CompletionWpfTests
             Assert.True(window.Topmost);
             Assert.True(window.ActualWidth <= 320);
             Assert.True(window.ActualHeight < 360);
+            var completedOverlayTitle = Descendants<TextBlock>(window).Single(text => text.IsVisible && text.Text == first.Title);
+            Assert.Contains(completedOverlayTitle.TextDecorations, decoration => decoration.Location == TextDecorationLocation.Strikethrough);
             Assert.DoesNotContain(Descendants<Button>(window), button => button.IsVisible && Equals(button.Content, "Thoát"));
             Assert.All(scenes, scene => Assert.False(scene.IsAnimating));
             var popup = Assert.IsType<System.Windows.Controls.Primitives.Popup>(window.FindName("OverlayFeedbackPopup"));
