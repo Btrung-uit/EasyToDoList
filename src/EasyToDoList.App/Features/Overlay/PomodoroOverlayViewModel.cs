@@ -16,6 +16,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
     private string? _errorMessage;
     private PomodoroSnapshot? _snapshot;
     private bool _isBusy;
+    private int _focusPreviewMinutes;
 
     public PomodoroOverlayViewModel(
         IPomodoroService service,
@@ -25,6 +26,7 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
         _service = service;
         _configurationProvider = configurationProvider;
         _lifecycleOwnsTimer = lifecycleOwnsTimer;
+        _focusPreviewMinutes = service.Current?.Configuration.FocusMinutes ?? PomodoroConfiguration.Standard.FocusMinutes;
         StartCommand = new AsyncRelayCommand(StartAsync);
         PauseCommand = new AsyncRelayCommand(PauseAsync);
         ResumeCommand = new AsyncRelayCommand(ResumeAsync);
@@ -40,7 +42,6 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
     public string StatusLabel { get => _statusLabel; private set => SetField(ref _statusLabel, value); }
     public string TimeText { get => _timeText; private set => SetField(ref _timeText, value); }
     public string? ErrorMessage { get => _errorMessage; private set => SetField(ref _errorMessage, value); }
-    public bool HasSession => _snapshot is not null;
     public bool IsRunning => _snapshot?.Status == PomodoroStatus.Running;
     public bool IsFocus => _snapshot?.Phase == PomodoroPhase.Focus;
     internal PomodoroSnapshot? Snapshot => _snapshot;
@@ -154,14 +155,25 @@ public sealed class PomodoroOverlayViewModel : ViewModelBase
             PomodoroStatus.Awaiting => "Sẵn sàng sang phiên mới",
             _ => "Chưa bắt đầu",
         };
-        TimeText = snapshot is null
-            ? "--:--"
-            : $"{snapshot.RemainingSeconds / 60:00}:{snapshot.RemainingSeconds % 60:00}";
-        OnPropertyChanged(nameof(HasSession));
+        UpdateTimeText();
         OnPropertyChanged(nameof(IsRunning));
         OnPropertyChanged(nameof(IsFocus));
         OnPropertyChanged(nameof(IsPaused));
         OnPropertyChanged(nameof(IsAwaiting));
         OnPropertyChanged(nameof(CanStart));
+    }
+
+    internal void UpdateFocusPreview(int focusMinutes)
+    {
+        _focusPreviewMinutes = focusMinutes;
+        UpdateTimeText();
+    }
+
+    private void UpdateTimeText()
+    {
+        var seconds = _snapshot is null or { Status: PomodoroStatus.Awaiting, Phase: PomodoroPhase.Focus }
+            ? (_focusPreviewMinutes is >= 15 and <= 60 ? _focusPreviewMinutes * 60 : (int?)null)
+            : _snapshot.RemainingSeconds;
+        TimeText = seconds is { } value ? $"{value / 60:00}:{value % 60:00}" : "--:--";
     }
 }

@@ -86,7 +86,7 @@ public partial class App : Application
             var today = new TodayViewModel(new TodoService(todoStore, rewardStore, profileStore, unitOfWork, economy, clock),
                 clock, profile.LoadAsync, () => settings.AnimationsEnabled && !settings.ReducedMotionEnabled,
                 new SqliteTodoHistoryQuery(_dbContext));
-            var dashboardPomodoro = new DashboardPomodoroViewModel();
+            var dashboardPomodoro = new DashboardPomodoroViewModel(pomodoroService.Current?.Configuration);
             var dashboard = new DashboardViewModel(today, new CalendarViewModel(new SqliteTodoHistoryQuery(_dbContext), clock),
                 dashboardPomodoro, profile, settings);
             await dashboard.InitializeAsync();

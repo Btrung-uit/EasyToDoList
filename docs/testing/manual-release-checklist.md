@@ -1,6 +1,6 @@
 # M12 — Release candidate checklist
 
-Current candidate: **0.1.0-rc.2**, Windows 11 x64. The 18/11 verification record below describes rc.1; later records identify their own artifacts. Implementation and local packaging do not by themselves authorize a public release. Unchecked gates below remain open.
+Current candidate: **0.1.0-rc.3**, Windows 11 x64. The verification records below identify their own artifacts. Implementation and local packaging do not by themselves authorize a public release. Unchecked gates below remain open.
 
 ## Build and artifacts
 
@@ -23,7 +23,7 @@ Run on Windows Sandbox with networking and clipboard sharing disabled. The launc
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-installer-sandbox.ps1 `
-  -Installer 'artifacts/release/0.1.0-rc.2/EasyToDoList-0.1.0-rc.2-win-x64-setup.exe' `
+  -Installer 'artifacts/release/0.1.0-rc.3/EasyToDoList-0.1.0-rc.3-win-x64-setup.exe' `
   -PublishDirectory '<self-contained publish directory printed by package-release.ps1>' `
   -CompilerPath '<path to Inno Setup 6 ISCC.exe>'
 ```
@@ -43,7 +43,7 @@ Inspect the printed evidence directory. `result.json` must say `passed`; a VM st
 
 The older-version installer fixture intentionally uses the candidate payload with an older **installer registration**, because no previous public release exists. This proves installer identity/upgrade behavior; it does not pretend to test a previous released binary. Schema compatibility is tested separately by migrating a real SQLite file from `20261112081912_AddTodoRewards`, retaining task/profile data and applying initialization twice.
 
-- [ ] Execute the updated GitHub workflow and verify uploaded artifacts before public distribution (not pushed/dispatched in this task).
+- [ ] Execute the release workflow and verify its uploaded artifacts before public distribution.
 
 ## Physical and interactive release gates
 

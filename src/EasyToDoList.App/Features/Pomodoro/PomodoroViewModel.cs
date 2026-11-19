@@ -7,14 +7,19 @@ namespace EasyToDoList.App.Features.Pomodoro;
 
 public sealed class PomodoroViewModel : ViewModelBase
 {
-    private int _focusMinutes = 25;
-    private int _shortBreakMinutes = 5;
-    private int _longBreakMinutes = 20;
-    private int _longBreakInterval = 4;
+    private int _focusMinutes;
+    private int _shortBreakMinutes;
+    private int _longBreakMinutes;
+    private int _longBreakInterval;
     private string? _validationMessage;
 
-    public PomodoroViewModel()
+    public PomodoroViewModel(PomodoroConfiguration? configuration = null)
     {
+        configuration ??= PomodoroConfiguration.Standard;
+        _focusMinutes = configuration.FocusMinutes;
+        _shortBreakMinutes = configuration.ShortBreakMinutes;
+        _longBreakMinutes = configuration.LongBreakMinutes;
+        _longBreakInterval = configuration.LongBreakInterval;
         ValidateCommand = new RelayCommand(_ => TryBuildConfiguration());
         SelectPresetCommand = new RelayCommand(SelectPreset);
     }

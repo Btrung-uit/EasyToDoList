@@ -1,15 +1,43 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Forms;
+using System.Windows.Threading;
 
 namespace EasyToDoList.App.Shell;
 
-public sealed class WindowModeController(Window window)
+public sealed class WindowModeController
 {
+    private readonly Window window;
     private ShellDisplayMode? _lastMode;
     private Rect? _dashboardBounds;
     private WindowState _dashboardState = WindowState.Normal;
     internal bool IsApplying { get; private set; }
+
+    public WindowModeController(Window window)
+    {
+        this.window = window;
+        window.Deactivated += OnDeactivated;
+    }
+
+    private void OnDeactivated(object? sender, EventArgs e)
+    {
+        if (_lastMode != ShellDisplayMode.Overlay || !window.IsVisible) return;
+        window.Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            if (_lastMode != ShellDisplayMode.Overlay || !window.IsVisible
+                || window.WindowState != WindowState.Normal || window.IsActive) return;
+
+            // Let the work window take focus before restoring the overlay's position in the topmost band.
+            const uint noSize = 0x0001, noMove = 0x0002, noActivate = 0x0010;
+            var topmost = new IntPtr(-1);
+            SetWindowPos(new WindowInteropHelper(window).Handle, topmost,
+                0, 0, 0, 0, noSize | noMove | noActivate);
+        });
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr handle, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
 
     public void Apply(ShellDisplayMode mode, double? overlayLeft = null, double? overlayTop = null)
     {

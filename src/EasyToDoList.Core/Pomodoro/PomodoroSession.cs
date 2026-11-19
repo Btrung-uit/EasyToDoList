@@ -138,9 +138,19 @@ public sealed class PomodoroSession
         Touch();
     }
 
-    public void StartAwaiting(DateTimeOffset nowUtc)
+    public void StartAwaiting(DateTimeOffset nowUtc, PomodoroConfiguration? configuration = null)
     {
         EnsureStatus(PomodoroStatus.Awaiting, "Only an awaiting phase can be started.");
+        if (Phase == PomodoroPhase.Focus && configuration is not null)
+        {
+            FocusMinutes = configuration.FocusMinutes;
+            ShortBreakMinutes = configuration.ShortBreakMinutes;
+            LongBreakMinutes = configuration.LongBreakMinutes;
+            LongBreakInterval = configuration.LongBreakInterval;
+            PlannedDurationSeconds = checked(FocusMinutes * 60);
+            RemainingSeconds = PlannedDurationSeconds;
+        }
+
         StartedAtUtc = nowUtc;
         PlannedEndAtUtc = nowUtc.AddSeconds(RemainingSeconds);
         PausedAtUtc = null;

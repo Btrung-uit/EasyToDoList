@@ -31,7 +31,7 @@ public sealed class PomodoroService(
             }
             else if (session.Status == PomodoroStatus.Awaiting)
             {
-                session.StartAwaiting(clock.UtcNow);
+                session.StartAwaiting(clock.UtcNow, configuration);
             }
             else
             {

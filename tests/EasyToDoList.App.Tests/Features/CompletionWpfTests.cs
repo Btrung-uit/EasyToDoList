@@ -25,6 +25,7 @@ using EasyToDoList.Core.Todos;
 using EasyToDoList.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ShapePath = System.Windows.Shapes.Path;
 
 namespace EasyToDoList.App.Tests.Features;
 
@@ -44,6 +45,39 @@ public sealed class CompletionWpfTests
     [Fact]
     public Task Window_renders_committed_feedback_switches_modes_and_undo_reverses_sqlite_once() =>
         RunOnDispatcherAsync(CheckWindowAsync);
+
+    private static async Task CheckOverlayStackingAsync(Window overlay)
+    {
+        var workWindow = new Window
+        {
+            Topmost = true, Width = 340, Height = 280,
+            Left = overlay.Left - 20, Top = overlay.Top,
+        };
+        try
+        {
+            overlay.Activate();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(overlay.IsActive);
+
+            workWindow.Show();
+            workWindow.Activate();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.True(workWindow.IsActive);
+            var expected = new System.Windows.Interop.WindowInteropHelper(overlay).Handle;
+            var above = new System.Windows.Interop.WindowInteropHelper(workWindow).Handle;
+            const uint previousWindow = 3;
+            do { above = GetWindow(above, previousWindow); } while (above != IntPtr.Zero && above != expected);
+            Assert.Equal(expected, above);
+        }
+        finally
+        {
+            workWindow.Close();
+            overlay.Activate();
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindow(IntPtr handle, uint command);
 
     private static async Task CheckDashboardRoundTripsAsync(WindowState dashboardState)
     {
@@ -229,6 +263,7 @@ public sealed class CompletionWpfTests
             Assert.True(titleInput.ActualHeight >= 44);
             Assert.True(titleInput.ActualWidth > 300);
             Assert.False(today.ScheduleExpanded);
+            AssertNavigationAlignment(window);
             SaveImage(window, "dashboard-quest-journal.png");
             var initialWidth = window.Width;
             var initialHeight = window.Height;
@@ -236,6 +271,7 @@ public sealed class CompletionWpfTests
             window.Height = 600;
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Assert.True(window.IsCompactDashboard);
+            AssertNavigationAlignment(window);
             var narrowScroll = (ScrollViewer)window.FindName("DashboardScroll");
             Assert.Equal(0, narrowScroll.ScrollableWidth);
             Assert.Equal(0, narrowScroll.ScrollableHeight);
@@ -295,6 +331,7 @@ public sealed class CompletionWpfTests
             Assert.NotSame(PresentationSource.FromVisual(window), PresentationSource.FromVisual(toast));
             var overlayHeight = window.ActualHeight;
             await CheckOverlayOpacityAsync(window);
+            await CheckOverlayStackingAsync(window);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var undo = Descendants<Button>(toast).Single(x => x.IsVisible && Equals(x.Content, "Hoàn tác"));
             Assert.True(undo.Focusable && undo.IsEnabled);
@@ -438,6 +475,27 @@ public sealed class CompletionWpfTests
             Assert.True(shell.PomodoroOverlay.IsAwaiting);
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             AssertPomodoroActions(window, "Bắt đầu");
+            await shell.PomodoroOverlay.SkipAsync();
+            shell.ShowDashboardCommand.Execute(null);
+            dashboard.NavigateCommand.Execute("Pomodoro");
+            foreach (var (preset, time) in new[] { ("45/10", "45:00"), ("50/10", "50:00") })
+            {
+                pomodoroVm.SelectPresetCommand.Execute(preset);
+                Assert.Equal(time, shell.PomodoroOverlay.TimeText);
+                Assert.Contains(Descendants<TextBlock>(window), text => text.IsVisible && text.Text == time);
+            }
+            dashboard.NavigateCommand.Execute("Today");
+            shell.ShowOverlayCommand.Execute(OverlayMode.Pomodoro);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Contains(Descendants<TextBlock>(window), text => text.IsVisible && text.Text == "50:00");
+            await shell.PomodoroOverlay.StartAsync();
+            Assert.Equal(3000, pomodoro.Current!.RemainingSeconds);
+            Assert.Equal(1, pomodoro.Current.CompletedFocusCount);
+            pomodoroVm.SelectPresetCommand.Execute("25/5");
+            Assert.Equal("50:00", shell.PomodoroOverlay.TimeText);
+            clock.Advance(50 * 60 * 1000);
+            await shell.PomodoroOverlay.RefreshAsync();
+            Assert.Equal("10:00", shell.PomodoroOverlay.TimeText);
             await shell.PomodoroOverlay.StartAsync();
             Assert.Equal("rest", mascotScene.MascotState);
             await shell.PomodoroOverlay.ConfirmStopAsync();
@@ -532,6 +590,20 @@ public sealed class CompletionWpfTests
             var child = VisualTreeHelper.GetChild(parent, i);
             if (child is T value) yield return value;
             foreach (var descendant in Descendants<T>(child)) yield return descendant;
+        }
+    }
+
+    private static void AssertNavigationAlignment(MainWindow window)
+    {
+        var dashboard = ((ShellViewModel)window.DataContext).Dashboard!;
+        var buttons = Descendants<Button>(window).Where(button => button.Command == dashboard.NavigateCommand).ToArray();
+        Assert.Equal(4, buttons.Length);
+        foreach (var button in buttons)
+        {
+            var icon = Assert.Single(Descendants<ShapePath>(button));
+            var left = icon.TranslatePoint(new Point(), button).X;
+            var expected = window.IsCompactDashboard ? (button.ActualWidth - icon.ActualWidth) / 2 : button.Padding.Left;
+            Assert.InRange(Math.Abs(left - expected), 0, 2);
         }
     }
 

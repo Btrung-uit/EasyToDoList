@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using EasyToDoList.App.Shell;
+using EasyToDoList.App.Features.Pomodoro;
 using EasyToDoList.App.Features.Today;
 using EasyToDoList.Core.Pomodoro;
 
@@ -43,7 +44,12 @@ public partial class MainWindow : Window
         _feedbackTimer.Tick += OnFeedbackTimerTick;
         if (viewModel.Dashboard is not null) viewModel.Dashboard.Today.CompletionCommitted += OnCompletionCommitted;
         DataContext = viewModel;
-        if (viewModel.Dashboard is { } dashboard) dashboard.Settings.PropertyChanged += OnSettingsChanged;
+        if (viewModel.Dashboard is { } dashboard)
+        {
+            dashboard.Settings.PropertyChanged += OnSettingsChanged;
+            dashboard.Pomodoro.PropertyChanged += OnPomodoroConfigurationChanged;
+            viewModel.PomodoroOverlay?.UpdateFocusPreview(dashboard.Pomodoro.FocusMinutes);
+        }
         if (viewModel.PomodoroOverlay is { } overlay) overlay.PropertyChanged += OnPomodoroChanged;
         UpdateScene();
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -144,6 +150,12 @@ public partial class MainWindow : Window
     private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e) => UpdateScene();
 
     private void OnPomodoroChanged(object? sender, PropertyChangedEventArgs e) => UpdateScene();
+
+    private void OnPomodoroConfigurationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PomodoroViewModel.FocusMinutes) && sender is PomodoroViewModel pomodoro)
+            _viewModel.PomodoroOverlay?.UpdateFocusPreview(pomodoro.FocusMinutes);
+    }
 
     private void UpdateScene()
     {
@@ -275,7 +287,11 @@ public partial class MainWindow : Window
         if (_viewModel.Dashboard is not null) _viewModel.Dashboard.Today.CompletionCommitted -= OnCompletionCommitted;
         _completionSound.Dispose();
         _pomodoroSound.Dispose();
-        if (_viewModel.Dashboard is { } dashboard) dashboard.Settings.PropertyChanged -= OnSettingsChanged;
+        if (_viewModel.Dashboard is { } dashboard)
+        {
+            dashboard.Settings.PropertyChanged -= OnSettingsChanged;
+            dashboard.Pomodoro.PropertyChanged -= OnPomodoroConfigurationChanged;
+        }
         if (_viewModel.PomodoroOverlay is { } overlay) overlay.PropertyChanged -= OnPomodoroChanged;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.ExitRequested -= OnExitRequested;
